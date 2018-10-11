@@ -1,0 +1,14 @@
+Package: finetworks
+Type: Package
+Title: Reconstructs Financial Networks
+Version: 0.0.0.9000
+Date: 2018-10-11
+Author@R: c(
+	person("Scott", "James", email="james.scott15@imperial.ac.uk", role = c("aut","cre")),
+	person("Gandy", "Axel", email = "a.gandy@imperial.ac.uk", role = "aut"))
+Maintainer: James Scott <james.scott15@imperial.ac.uk>
+Description: One paragraph description of what the package does as
+       one or more full sentences.
+License: MIT
+Imports: methods, Rcpp (>= 0.12.14)
+LinkingTo: Rcpp

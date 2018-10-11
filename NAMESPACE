@@ -1,0 +1,3 @@
+useDynLib(finetworks)
+exportPattern("^[[:alpha:]]+")
+import(methods, Rcpp)
