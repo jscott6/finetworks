@@ -21,6 +21,8 @@ public:
     NM weight_matrix() const;
     IM fixed() const;
 private:
+    void SampleKernel();
+    Edge* sampleEdge(Vertex& v);
     int m_, n_;
     std::default_random_engine generator_;
     std::vector<Vertex> vertices_;

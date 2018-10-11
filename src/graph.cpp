@@ -49,7 +49,7 @@ List Graph::sample(int nsamples, int thin, int burnin)
 // performs a single sampling step
 void Graph::sampleStep() 
 {
-    Rcout << "Hello World!" << endl;
+
 }
 
 // print out a representation of the internal state
@@ -77,4 +77,14 @@ IM Graph::fixed() const
         for (int j = 0; j != n_; ++j)
             fm(i,j) = edges_[i][j].fixed();
     return fm;
+}
+
+// samples a new edge uniformly
+// remove the edge from consideration here-on-in
+Edge* sampleEdge(Vertex& v)
+{
+    std::uniform_int_distribution<int> dist(0, v.pos);
+    Edge * e = v.edges[dist(generator_)];
+    e->move_back();
+    return e;
 }
