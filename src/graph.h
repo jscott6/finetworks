@@ -4,24 +4,27 @@
 
 #include <Rcpp.h>
 #include <random>
+#include "edge.h"
 
 using IM = Rcpp::IntegerMatrix;
-using IV = Rcpp::IntegerVector;
+using NV = Rcpp::NumericVector;
+using NM = Rcpp::NumericMatrix;
 
 class Graph 
 {
 public:
-    Graph(IM weight_matrix, IM fixed);
-    Graph(IV in_strength, IV out_strength, IM fixed);
+    Graph(NM weight_matrix, IM fixed);
+    //Graph(NV in_strength, NV out_strength, IM fixed);
     Rcpp::List sample(int nsamples = 10000, int thin = 10, int burnin = 5000);
     void summary() const;
     void sampleStep();
-    IM weight_matrix() const;
+    NM weight_matrix() const;
     IM fixed() const;
 private:
+    int m_, n_;
     std::default_random_engine generator_;
     std::vector<Vertex> vertices_;
-    Edge** edges;
+    Edge** edges_;
 };
 
 #endif

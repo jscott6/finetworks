@@ -4,15 +4,16 @@
 
 using namespace std;
 
+double const EPS = 1e-9;
 
-Edge::Edge(Vertex* const head, Vertex* const tail, int const weight, int const fixed):
+Edge::Edge(Vertex* const head, Vertex* const tail, double const weight, int const fixed):
     head_(head), 
     tail_(tail), 
     weight_(weight), 
     fixed_(fixed) 
 {
     // add to vertex structure if positive weight and free
-    if(weight_ > 0 && !fixed_)
+    if(weight > EPS && !fixed)
         add();
     return;
 }
