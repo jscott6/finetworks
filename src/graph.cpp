@@ -144,13 +144,13 @@ DeltaRange Graph::getDeltaRange(vector<Edge *> &vec)
   // compute support for Delta
   DeltaRange dr;
   for (int i = 0; i != vec.size(); ++i)
-      if (i %% 2) dr.up = min(dr.up, vec[i]->weight());
+      if (i % 2) dr.up = min(dr.up, vec[i]->weight());
       else dr.low = max(dr.low, -vec[i]->weight());
   return dr;
 }
 
 // samples delta from conditional distribution
-double Graph::sampleDelta(DeltaRange& const dr)
+double Graph::sampleDelta(const DeltaRange& dr)
 {
     uniform_real_distribution<double> dist(dr.low, dr.up);
     return dist(generator_);
@@ -159,7 +159,18 @@ double Graph::sampleDelta(DeltaRange& const dr)
 void Graph::updateWeights(vector<Edge *> &vec, double delta)
 {
   for (int i = 0; i != vec.size(); ++i)
-      if (i %% 2) vec[i]->incrementWeight(-delta);
-      else vec[i]->incrementWeight(delta);
-  return dr;
+      if (i % 2) vec[i]->weight(vec[i]->weight() - delta);
+      else vec[i]->weight(vec[i]->weight() + delta);
 }
+
+
+
+
+
+
+
+
+
+
+
+

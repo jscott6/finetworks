@@ -36,7 +36,8 @@ private:
     int sampleKernel(std::vector<Edge*>& vec);
     int sampleEdge(Vertex* v, std::vector<Edge*>& vec);
     void reset(std::vector<Edge *> &vec);
-    double sampleDelta(DeltaRange& const dr);
+    void updateWeights(std::vector<Edge *> &vec, double delta);
+    double sampleDelta(const DeltaRange& dr);
     int m_, n_;
     std::default_random_engine generator_;
     std::vector<Vertex> vertices_;

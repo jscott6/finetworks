@@ -20,7 +20,7 @@ public:
     Edge(Vertex* const head, Vertex* const tail, double const weight, int const fixed);
     int fixed() const { return fixed_; }
     double weight() const {return weight_; }
-    void incrementWeight(double delta) { weight_ += delta; }
+    void weight(double w);
     void setHeadPos(int const head_pos) { head_pos_ = head_pos; }
     void setTailPos(int const tail_pos) { tail_pos_ = tail_pos; }
     Vertex* head() const { return head_; }

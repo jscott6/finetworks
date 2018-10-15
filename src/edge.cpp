@@ -43,6 +43,12 @@ void Edge::remove()
     tail_->edges.pop_back();
 }
 
+void Edge::weight(double w)
+{
+  if (weight_ < EPS && w > EPS) add();
+  if (weight_ > EPS && w < EPS) remove();
+  weight_ = w;
+}
 
 /*
 method moves the edge to final position
