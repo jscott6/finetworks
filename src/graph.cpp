@@ -58,11 +58,11 @@ void Graph::sampleStep()
 {
     vector<Edge*> cycle;
     int discard = sampleKernel(cycle);
-    Rcout << "Discard: " << discard << endl;
-    for(const auto e: cycle)
-        Rcout << "(" << e->tail()->index+1 << "," << e->head()->index+1-m_ << ")" << endl;
-    Rcout << endl;
     reset(cycle);
+    if (discard) return;
+    DeltaRange dr = getDeltaRange(cycle);
+    double delta = sampleDelta(dr);
+    updateWeights(cycle, delta);
 }
 
 // reset vertex positions for new sampling step
@@ -74,7 +74,6 @@ void Graph::reset(vector<Edge *> &vec)
       e->tail()->pos = e->tail()->edges.size()-1;
   }
 }
-
 
 // print out a representation of the internal state
 void Graph::summary() const
@@ -121,11 +120,6 @@ int Graph::sampleEdge(Vertex* v, vector<Edge*>& vec)
     return 0;
 }
 
-void Graph::printEdge(int i, int j)
-{
-    Rcout << "(" << edges_[i-1][j-1].tail_pos() << "," << edges_[i-1][j-1].head_pos() << ")" << endl;
-}
-
 // samples a kernel along which we perform an update
 int Graph::sampleKernel(vector<Edge*>& vec)
 {
@@ -143,4 +137,29 @@ int Graph::sampleKernel(vector<Edge*>& vec)
         else if(sampleEdge(vec.back()->tail(), vec)) return 1;
     }
     return 0;
+}
+
+DeltaRange Graph::getDeltaRange(vector<Edge *> &vec)
+{
+  // compute support for Delta
+  DeltaRange dr;
+  for (int i = 0; i != vec.size(); ++i)
+      if (i %% 2) dr.up = min(dr.up, vec[i]->weight());
+      else dr.low = max(dr.low, -vec[i]->weight());
+  return dr;
+}
+
+// samples delta from conditional distribution
+double Graph::sampleDelta(DeltaRange& const dr)
+{
+    uniform_real_distribution<double> dist(dr.low, dr.up);
+    return dist(generator_);
+}
+
+void Graph::updateWeights(vector<Edge *> &vec, double delta)
+{
+  for (int i = 0; i != vec.size(); ++i)
+      if (i %% 2) vec[i]->incrementWeight(-delta);
+      else vec[i]->incrementWeight(delta);
+  return dr;
 }

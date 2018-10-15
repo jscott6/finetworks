@@ -4,11 +4,22 @@
 
 #include <Rcpp.h>
 #include <random>
+#include <float.h>
+#include <algorithm>
 #include "edge.h"
 
 using IM = Rcpp::IntegerMatrix;
 using NV = Rcpp::NumericVector;
 using NM = Rcpp::NumericMatrix;
+
+struct DeltaRange
+{
+  double low, up;
+  DeltaRange()
+      : low(-DBL_MAX), up(DBL_MAX)
+  {
+  }
+};
 
 class Graph 
 {
@@ -21,9 +32,11 @@ public:
     NM weight_matrix() const;
     IM fixed() const;
 private:
+    DeltaRange getDeltaRange(std::vector<Edge*>& vec);
     int sampleKernel(std::vector<Edge*>& vec);
     int sampleEdge(Vertex* v, std::vector<Edge*>& vec);
     void reset(std::vector<Edge *> &vec);
+    double sampleDelta(DeltaRange& const dr);
     int m_, n_;
     std::default_random_engine generator_;
     std::vector<Vertex> vertices_;

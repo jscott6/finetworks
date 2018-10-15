@@ -19,8 +19,6 @@ Edge::Edge(Vertex* const head, Vertex* const tail, double const weight, int cons
         head_->pos++;
         tail_->pos++;
     }
-        
-    return;
 }
 
 void Edge::add() 
