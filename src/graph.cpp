@@ -25,6 +25,13 @@ Graph::Graph(NM weight_matrix, IM fixed):
         for(int j = 0; j != n_; ++j)
             new (&edges_[i][j]) Edge(&vertices_[m_+j], &vertices_[i], 
                                   weight_matrix(i,j), fixed(i,j));
+    // initialise initial_vertices_
+    for (int i = m_; i != m_ + n_; ++i)
+        if (vertices_[i].edges.size())
+            initial_vertices_.push_back(&vertices_[i]);
+    // check we have something...     
+    if (initial_vertices_.size() == 0)
+        throw invalid_argument("Matrix fully determined by specification");
 }
 
 /*

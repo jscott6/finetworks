@@ -11,6 +11,7 @@ struct Vertex
     int index;
     int pos;
     std::vector<Edge*> edges;
+    Vertex() : pos(0) {}
 };
 
 class Edge 

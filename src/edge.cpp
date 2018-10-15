@@ -14,7 +14,12 @@ Edge::Edge(Vertex* const head, Vertex* const tail, double const weight, int cons
 {
     // add to vertex structure if positive weight and free
     if(weight > EPS && !fixed)
+    {
         add();
+        head_->pos++;
+        tail_->pos++;
+    }
+        
     return;
 }
 
