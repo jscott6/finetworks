@@ -11,7 +11,7 @@ struct Vertex
     int index;
     int pos;
     std::vector<Edge*> edges;
-    Vertex() : pos(0) {}
+    Vertex() : pos(-1) {}
 };
 
 class Edge 
@@ -22,8 +22,10 @@ public:
     double weight() const {return weight_; }
     void setHeadPos(int const head_pos) { head_pos_ = head_pos; }
     void setTailPos(int const tail_pos) { tail_pos_ = tail_pos; }
-    int head() const { return head_->index; }
-    int tail() const { return tail_->index; }
+    int head_pos() const { return head_pos_; }
+    int tail_pos() const { return tail_pos_; }
+    Vertex* head() const { return head_; }
+    Vertex* tail() const { return tail_; }
     void moveBack();
 private:
     void add();

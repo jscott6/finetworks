@@ -30,7 +30,7 @@ void checks(NM weight_matrix, IM fixed) {
 
 void printEdgeData(Edge const &e)
 {
-  Rcout << "Edge: " << e.tail() + 1 << "->" << e.head() + 1 << endl;
+  Rcout << "Edge: " << e.tail()->index + 1 << "->" << e.head()->index + 1 << endl;
   Rcout << "Weight: " << e.weight() << endl;
   Rcout << endl;
 }
@@ -47,11 +47,11 @@ void printVertexData(Vertex const &v)
   Rcout << "------------" << endl;
   Rcout << setw(8) << "Tail: ";
   for (int i = 0; i != v.edges.size(); ++i)
-    Rcout << setw(2) << v.edges[i]->tail() + 1 << " ";
+    Rcout << setw(2) << v.edges[i]->tail()->index + 1 << " ";
   Rcout << endl;
   Rcout << setw(8) << "Head: ";
   for (int i = 0; i != v.edges.size(); ++i)
-    Rcout << setw(2) << v.edges[i]->head() + 1 << " ";
+    Rcout << setw(2) << v.edges[i]->head()->index + 1 << " ";
   Rcout << endl;
   Rcout << setw(8) << "Weight: ";
   for (int i = 0; i != v.edges.size(); ++i)

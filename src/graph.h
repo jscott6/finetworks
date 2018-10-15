@@ -22,7 +22,8 @@ public:
     IM fixed() const;
 private:
     int sampleKernel(std::vector<Edge*>& vec);
-    int sampleEdge(Vertex& v, std::vector<Edge*>& vec);
+    int sampleEdge(Vertex* v, std::vector<Edge*>& vec);
+    void reset(std::vector<Edge *> &vec);
     int m_, n_;
     std::default_random_engine generator_;
     std::vector<Vertex> vertices_;
