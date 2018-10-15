@@ -27,15 +27,6 @@ void checks(NM weight_matrix, IM fixed) {
     throw invalid_argument("All entries of f must be binary");
 }
 
-// samples a new edge uniformly
-// remove the edge from consideration here-on-in
-Edge* sample(Vertex& v, std::default_random_engine &gen)
-{
-    std::uniform_int_distribution<int> dist(0, v.pos);
-    Edge * e = v.edges[dist(gen)];
-    e->move_back();
-    return e;
-}
 
 void printEdgeData(Edge const &e)
 {

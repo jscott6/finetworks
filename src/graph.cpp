@@ -81,10 +81,20 @@ IM Graph::fixed() const
 
 // samples a new edge uniformly
 // remove the edge from consideration here-on-in
-Edge* sampleEdge(Vertex& v)
+int Graph::sampleEdge(Vertex& v, vector<Edge*>& vec)
 {
-    std::uniform_int_distribution<int> dist(0, v.pos);
-    Edge * e = v.edges[dist(generator_)];
+    // check there are free edges
+    if(v.pos < 0) return -1;
+    // sample and add to vector
+    uniform_int_distribution<int> dist(0, v.pos);
+    Edge* e = v.edges[dist(generator_)];
     e->move_back();
-    return e;
+    vec.push_back(e);
+    return 0;
+}
+
+// samples a kernel along which we perform an update
+void Graph::SampleKernel(std::vector<Edge*> vec)
+{
+
 }
