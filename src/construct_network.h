@@ -25,16 +25,21 @@ namespace ConstructNetwork {
   };
 
   class Graph {
-    std::vector<Vertex> vertices_;
-    std::vector<std::vector<double> > weight_matrix_, flow_, capacity_;
-    unsigned int source_, sink_;
-  public:
+public:
     Graph(NV, NV, DF);
     void addEdge(unsigned int, unsigned int, unsigned int);
     bool findPath();
     unsigned int calcPathFlow();
     void updateFlow(unsigned int);
-    NM constructMatrix(NV, NV);
+    NM constructWeightMatrix();
+    IM constructFixedMatrix();
+private:
+    std::vector<Vertex> vertices_;
+    IV tail_, head_;
+    NV weights;
+    std::vector<std::vector<double> > adjacency_list_, flow_, capacity_;
+    unsigned int source_, sink_;
+    int m_, n_;
   };
 }
 
