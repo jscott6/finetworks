@@ -4,13 +4,15 @@
 
 using namespace std;
 using namespace Rcpp;
+using namespace arma;
 
 using IM = IntegerMatrix;
 using NV = NumericVector;
 using NM = NumericMatrix;
 
-Graph::Graph(NM weight_matrix, IM fixed):
+Graph::Graph(NM weight_matrix, IM fixed, bool sparse):
     generator_(initGenerator())
+    sparse_(sparse)
 {
     checks(weight_matrix, fixed);
     m_ = weight_matrix.nrow();
@@ -45,7 +47,8 @@ List Graph::sample(int nsamples, int thin, int burnin)
     for (int i = 0; i != nsamples; ++i) {
         for(int j = 0; j != (thin + 1); ++j)
             sampleStep();
-        results(i) = weight_matrix();
+        if(sparse_) results(i) = sparse_weight_matrix();
+        else results(i) = weight_matrix();
     }
     return results;
 }
@@ -92,6 +95,33 @@ NM Graph::weight_matrix() const
             wm(i,j) = edges_[i][j].weight();
     return wm;
 }
+
+// reconstructs a sparse matrix representation from internal datastructure
+NM Graph::sparse_weight_matrix() const
+{
+    // get total number of edges
+    int nedges = 0;
+    for (int i = 0; i != m_; ++i)
+        nedges += vertices_.edges.size();
+    umat locations(nedges);
+    vec values(nedges);
+
+    int k = 0;
+    for (int i = 0; i != m_; ++i)
+        for (const auto e: vertices_[i].edges)
+        {
+            // store locations
+            locations(0,k) = i;
+            locations(1,k) = e->head()->index - m_;
+            // store corresponding values
+            values(k) = e->weight();
+            k++;
+        }
+    return sp_mat(locations, values, m_, n_);
+}
+
+
+
 
 // reconstructs fixed matrix from internal datastructure
 IM Graph::fixed() const
