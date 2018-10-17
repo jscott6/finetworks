@@ -5,6 +5,9 @@
 using namespace std;
 using namespace Rcpp;
 
+using IM = IntegerMatrix;
+using NV = NumericVector;
+using NM = NumericMatrix;
 
 Graph::Graph(NM weight_matrix, IM fixed):
     generator_(initGenerator())
@@ -34,12 +37,6 @@ Graph::Graph(NM weight_matrix, IM fixed):
         throw invalid_argument("Matrix fully determined by specification");
 }
 
-/*
-Graph::Graph(IV in_strength, IV out_strength, IM fixed) 
-{
-
-}
-*/
 
 // performs multiple sampling steps, returning a weights matrix
 List Graph::sample(int nsamples, int thin, int burnin) 

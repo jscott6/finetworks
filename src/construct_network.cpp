@@ -5,13 +5,20 @@ using namespace std;
 using namespace Rcpp;
 using namespace ConstructNetwork;
 
+
+using NV = Rcpp::NumericVector;
+using IV = Rcpp::IntegerVector;
+using NM = Rcpp::NumericMatrix;
+using IM = Rcpp::IntegerMatrix;
+using DF = Rcpp::DataFrame;
+
 // adds an edge to adjacency matrix, while adjusting capacity_,
 void Graph::addEdge(int i, int j, double capacity){
   adjacency_list_[i].push_back(j);
   capacity_[i][j] = capacity;
 }
 
-Graph::Graph(IV out_strength, IV in_strength, DF df)
+Graph::Graph(NV out_strength, NV in_strength, DF df)
 {
 
   m_ = out_strength.size();
@@ -20,7 +27,7 @@ Graph::Graph(IV out_strength, IV in_strength, DF df)
   sink_ = m_ + n_ + 1;
   tail_ = df["tail"];
   head_ = df["head"];
-  weights_ = df["weights"];
+  weights_ = df["weight"];
 
   int nvertices = sink_ + 1;
   vertices_ = vector<Vertex>(nvertices);
@@ -67,7 +74,7 @@ bool Graph::findPath(){
   {
     v.color = white;
     v.distance = 0;
-    v.predecessor = 0; 
+    v.predecessor = 0;
   }
 
   vertices_[source_].color = gray;
@@ -100,9 +107,8 @@ bool Graph::findPath(){
 // given a path, calculates the flow_ across that path
 double Graph::calcPathFlow()
 {
-    int v, f, 
-    double edge_flow;
-    v = sink_;
+    int v = sink_;
+    double f, edge_flow;
     
     while (v != source_)
     {
@@ -128,7 +134,7 @@ void Graph::updateFlow(double f)
 
 NM Graph::constructWeightMatrix()
 {
-    IM x(m_,n_);
+    NM x(m_,n_);
     for(int i = 0; i != m_; ++i)
         for(int j = 0; j != n_; ++j)
             x(i,j) = flow_[i + 1][m_ + j + 1] - flow_[m_ + j + 1][i + 1];

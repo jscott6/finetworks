@@ -5,15 +5,16 @@
 #include <random>
 #include <Rcpp.h>
 #include "graph.h"
+#include "construct_network.h"
 
-using NM = Rcpp::NumericMatrix;
-using IM = Rcpp::IntegerMatrix;
 
 std::default_random_engine initGenerator();
 
-void checks(NM weight_matrix, IM fixed);
+void checks(Rcpp::NumericMatrix weight_matrix, Rcpp::IntegerMatrix fixed);
 void printEdgeData(Edge const &e);
 void printVertexData(Vertex const &v);
+Rcpp::List constructNetwork(Rcpp::NumericVector in_strength, 
+                            Rcpp::NumericVector out_strength, Rcpp::DataFrame df);
 
 // generic function to sample from a vector
 // given some vector, return a random (uniform) element from it

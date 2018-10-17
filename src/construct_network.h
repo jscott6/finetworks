@@ -6,10 +6,6 @@
 #include <vector>
 #include <queue>
 
-using NV = Rcpp::NumericVector;
-using NM = Rcpp::NumericMatrix;
-using DF = Rcpp::DataFrame;
-
 namespace ConstructNetwork {
 
   enum VertexColor{white, gray, black};
@@ -26,17 +22,17 @@ namespace ConstructNetwork {
 
   class Graph {
 public:
-    Graph(NV, NV, DF);
-    void addEdge(unsigned int, unsigned int, unsigned int);
+    Graph(Rcpp::NumericVector, Rcpp::NumericVector, Rcpp::DataFrame);
+    void addEdge(int, int, double);
     bool findPath();
-    unsigned int calcPathFlow();
-    void updateFlow(unsigned int);
-    NM constructWeightMatrix();
-    IM constructFixedMatrix();
+    double calcPathFlow();
+    void updateFlow(double);
+    Rcpp::NumericMatrix constructWeightMatrix();
+    Rcpp::IntegerMatrix constructFixedMatrix();
 private:
     std::vector<Vertex> vertices_;
-    IV tail_, head_;
-    NV weights;
+    Rcpp::IntegerVector tail_, head_;
+    Rcpp::NumericVector weights_;
     std::vector<std::vector<double> > adjacency_list_, flow_, capacity_;
     unsigned int source_, sink_;
     int m_, n_;
