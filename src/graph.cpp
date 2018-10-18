@@ -178,10 +178,20 @@ DeltaRange Graph::getDeltaRange(vector<Edge *> &vec)
 
 // THIS NEEDS TO BE UPDATED TO GET THE CORRECT CONDITIONAL DISTRIBUTION
 // samples delta from conditional distribution
-double Graph::sampleDelta(const DeltaRange& dr)
+double Graph::sampleDelta(vector<Edge *> &vec)
 {
-    uniform_real_distribution<double> dist(dr.low, dr.up);
-    return dist(generator_);
+    DeltaRange dr = getDeltaRange(vec);
+    Zeros z = getZeros(vec, dr);
+    if (z.low + z.up < 3)
+    {
+        // compute lambda_marg
+        double lambda_marg = 0.0;
+        for (int i = 0; i < vec.size() - 1; i += 2)
+            lambda_marg += vec[i].lambda() - vec[i+1].lambda();
+        if (fabs(lambda_marg) < eps) lambda_marg = 0.0;
+        
+    }
+    }
 }
 
 void Graph::updateWeights(vector<Edge *> &vec, double delta)
@@ -208,6 +218,7 @@ double Graph::loglDelta(vector<Edge*> &vec, double delta)
 }
 
 // generates a r.v. from an extended exponential distribution
+// uses the inversion method
 double Graph::extExp(DeltaRange dr, double lambda_marg)
 {
     uniform_real_distribution<double> dist(0.0,1.0);
