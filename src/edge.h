@@ -17,9 +17,11 @@ struct Vertex
 class Edge 
 {
 public:
-    Edge(Vertex* const head, Vertex* const tail, double const weight, int const fixed);
+    Edge(Vertex* const head, Vertex* const tail, double const weight, int const fixed, double const p, double const lambda);
     int fixed() const { return fixed_; }
     double weight() const {return weight_; }
+    double p() const {return p_; }
+    double lambda() const {return lambda; }
     void weight(double w);
     void setHeadPos(int const head_pos) { head_pos_ = head_pos; }
     void setTailPos(int const tail_pos) { tail_pos_ = tail_pos; }
@@ -30,7 +32,7 @@ private:
     void add();
     void remove();
     Vertex* const head_, * const tail_;
-    double weight_;
+    double weight_, p_, lambda_;
     int head_pos_, tail_pos_;
     int const fixed_;
 };

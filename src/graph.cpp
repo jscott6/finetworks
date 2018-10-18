@@ -10,6 +10,8 @@ using IM = IntegerMatrix;
 using NV = NumericVector;
 using NM = NumericMatrix;
 
+double eps = 1e-9;
+
 Graph::Graph(NM weight_matrix, IM fixed):
     generator_(initGenerator())
 {
@@ -119,9 +121,6 @@ sp_mat Graph::sparse_weight_matrix() const
     return sp_mat(locations, values, m_, n_);
 }
 
-
-
-
 // reconstructs fixed matrix from internal datastructure
 IM Graph::fixed() const
 {
@@ -175,6 +174,9 @@ DeltaRange Graph::getDeltaRange(vector<Edge *> &vec)
   return dr;
 }
 
+
+
+// THIS NEEDS TO BE UPDATED TO GET THE CORRECT CONDITIONAL DISTRIBUTION
 // samples delta from conditional distribution
 double Graph::sampleDelta(const DeltaRange& dr)
 {
@@ -190,10 +192,39 @@ void Graph::updateWeights(vector<Edge *> &vec, double delta)
 }
 
 
+// computes log unconditional density of delta along a vector
+double Graph::loglDelta(vector<Edge*> &vec, double delta)
+{
+    double res = 0.0;
+    for (int i = 0; i != vec.size(); ++i)
+    {
+        double val = vec[i]->weight();
+        if (i % 2) val -= delta;
+        else val += delta;
+        if (val < eps) res += log(1.-vec[i]->p());
+        else    res += log(vec[i]->p()) + log(vec[i]->lambda()) - vec[i]->lambda()*val;
+    }
+    return res;
+}
 
+// generates a r.v. from an extended exponential distribution
+double Graph::extExp(DeltaRange dr, double lambda_marg)
+{
+    uniform_real_distribution<double> dist(0.0,1.0);
+    double u = dist(generator_);
+    if (lambda_marg = 0.0) return dr.low + u*(dr.up - dr.low);
+    else return -log((1-u)*exp(-lambda_marg*dr.low + u*exp(-lambda_marg*dr.up)))/lambda_marg;
+}
 
-
-
+// computes number of zeros induced at boundaries.
+Zeros Graph::getZeros(vector<Edge*> &vec, DeltaRange dr)
+{
+    Zeros z;
+    for (int i = 0; i != vec.size(); ++i)
+        if (i % 2) if (vec[i].weight() + dr.up < eps) z.up++;
+        else  if (vec[i].weight() + dr.low < eps) z.low++;
+    return z;
+}
 
 
 

@@ -3,7 +3,6 @@
 #define GUARD_graph
 
 #include <RcppArmadillo.h>
-//#include <Rcpp.h>
 #include <random>
 #include <float.h>
 #include <algorithm>
@@ -19,6 +18,15 @@ struct DeltaRange
   {
   }
 };
+
+struct Zeros
+{
+    unsigned int low, up;
+    Zeros()
+        : low(0), up(0)
+    {
+    }
+}
 
 class Graph 
 {
