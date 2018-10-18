@@ -10,9 +10,8 @@ using IM = IntegerMatrix;
 using NV = NumericVector;
 using NM = NumericMatrix;
 
-Graph::Graph(NM weight_matrix, IM fixed, bool sparse):
+Graph::Graph(NM weight_matrix, IM fixed):
     generator_(initGenerator())
-    sparse_(sparse)
 {
     checks(weight_matrix, fixed);
     m_ = weight_matrix.nrow();
@@ -41,13 +40,13 @@ Graph::Graph(NM weight_matrix, IM fixed, bool sparse):
 
 
 // performs multiple sampling steps, returning a weights matrix
-List Graph::sample(int nsamples, int thin, int burnin) 
+List Graph::sample(int nsamples, int thin, int burnin, bool sparse) 
 {
     List results(nsamples);
     for (int i = 0; i != nsamples; ++i) {
         for(int j = 0; j != (thin + 1); ++j)
             sampleStep();
-        if(sparse_) results(i) = sparse_weight_matrix();
+        if(sparse) results(i) = sparse_weight_matrix();
         else results(i) = weight_matrix();
     }
     return results;
@@ -97,13 +96,13 @@ NM Graph::weight_matrix() const
 }
 
 // reconstructs a sparse matrix representation from internal datastructure
-NM Graph::sparse_weight_matrix() const
+sp_mat Graph::sparse_weight_matrix() const
 {
     // get total number of edges
     int nedges = 0;
     for (int i = 0; i != m_; ++i)
-        nedges += vertices_.edges.size();
-    umat locations(nedges);
+        nedges += vertices_[i].edges.size();
+    umat locations(2, nedges);
     vec values(nedges);
 
     int k = 0;

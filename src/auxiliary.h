@@ -3,7 +3,7 @@
 #define GUARD_auxiliary
 
 #include <random>
-#include <Rcpp.h>
+#include <RcppArmadillo.h>
 #include "graph.h"
 #include "construct_network.h"
 

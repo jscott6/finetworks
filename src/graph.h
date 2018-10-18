@@ -2,8 +2,8 @@
 #ifndef GUARD_graph
 #define GUARD_graph
 
-#include <Rcpp.h>
 #include <RcppArmadillo.h>
+//#include <Rcpp.h>
 #include <random>
 #include <float.h>
 #include <algorithm>
@@ -23,9 +23,8 @@ struct DeltaRange
 class Graph 
 {
 public:
-    Graph(Rcpp::NumericMatrix weight_matrix, Rcpp::IntegerMatrix fixed, bool sparse = FALSE);
-    //Graph(NV in_strength, NV out_strength, IM fixed);
-    Rcpp::List sample(int nsamples = 10000, int thin = 10, int burnin = 5000);
+    Graph(Rcpp::NumericMatrix weight_matrix, Rcpp::IntegerMatrix fixed);
+    Rcpp::List sample(int nsamples = 10000, int thin = 10, int burnin = 5000, bool sparse = FALSE);
     void summary() const;
     void sampleStep();
     Rcpp::NumericMatrix weight_matrix() const;
@@ -39,7 +38,6 @@ private:
     void updateWeights(std::vector<Edge *> &vec, double delta);
     double sampleDelta(const DeltaRange& dr);
     int m_, n_;
-    bool sparse_;
     std::default_random_engine generator_;
     std::vector<Vertex> vertices_;
     std::vector<Vertex*> initial_vertices_;

@@ -11,4 +11,4 @@ Description: One paragraph description of what the package does as
        one or more full sentences.
 License: MIT
 Imports: methods, Rcpp (>= 0.12.14)
-LinkingTo: Rcpp
+LinkingTo: Rcpp, RcppArmadillo
