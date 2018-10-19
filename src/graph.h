@@ -10,22 +10,19 @@
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
-struct DeltaRange
+struct Boundary
 {
-  double low, up;
-  DeltaRange()
-      : low(-DBL_MAX), up(DBL_MAX)
+    double dlow, dup, llow, lup;
+    unsigned int nlow, nup;
+    Boundary()
+      : dlow(-DBL_MAX), 
+        dup(DBL_MAX), 
+        nlow(0), 
+        nup(0),
+        llow(0.),
+        lup(0.)
   {
   }
-};
-
-struct Zeros
-{
-    unsigned int low, up;
-    Zeros()
-        : low(0), up(0)
-    {
-    }
 }
 
 class Graph 
@@ -39,12 +36,14 @@ public:
     arma::sp_mat sparse_weight_matrix() const;
     Rcpp::IntegerMatrix fixed() const;
 private:
-    DeltaRange getDeltaRange(std::vector<Edge*>& vec);
+    Boundary getBoundaryData(std::vector<Edge*>& vec);
     int sampleKernel(std::vector<Edge*>& vec);
     int sampleEdge(Vertex* v, std::vector<Edge*>& vec);
     void reset(std::vector<Edge *> &vec);
     void updateWeights(std::vector<Edge *> &vec, double delta);
     double sampleDelta(const DeltaRange& dr);
+    double loglDelta(vector<Edge*> &vec, double delta);
+    double extExp(Boundary b, double lambda_marg);
     int m_, n_;
     std::default_random_engine generator_;
     std::vector<Vertex> vertices_;

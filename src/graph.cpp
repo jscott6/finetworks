@@ -61,9 +61,7 @@ void Graph::sampleStep()
     int discard = sampleKernel(cycle);
     reset(cycle);
     if (discard) return;
-    DeltaRange dr = getDeltaRange(cycle);
-    double delta = sampleDelta(dr);
-    updateWeights(cycle, delta);
+    updateWeights(cycle, sampleDelta(cycle));
 }
 
 // reset vertex positions for new sampling step
@@ -71,8 +69,8 @@ void Graph::reset(vector<Edge *> &vec)
 {
   for(auto &e : vec)
   {
-      e->head()->pos = e->head()->edges.size()-1;
-      e->tail()->pos = e->tail()->edges.size()-1;
+      e->head()->pos = e->head()->edges.size() - 1;
+      e->tail()->pos = e->tail()->edges.size() - 1;
   }
 }
 
@@ -164,54 +162,92 @@ int Graph::sampleKernel(vector<Edge*>& vec)
     return 0;
 }
 
-DeltaRange Graph::getDeltaRange(vector<Edge *> &vec)
+// given a cycle, computes required data from the edge cases
+Boundary Graph::getBoundaryData(vector<Edge*> &vec)
 {
-  // compute support for Delta
-  DeltaRange dr;
-  for (int i = 0; i != vec.size(); ++i)
-      if (i % 2) dr.up = min(dr.up, vec[i]->weight());
-      else dr.low = max(dr.low, -vec[i]->weight());
-  return dr;
+    Boundary b;
+    // start with computing the range of delta
+    for (int i = 0; i < vec.size() - 1; i += 2)
+    {
+        b.dlow = max(b.dlow, -vec[i]->weight());
+        b.dup = min(b.dup, vec[i+1]->weight());
+    }
+    // how many edges deleted at boundaries?
+    for (int i = 0; i < vec.size() - 1; i += 2)
+    {
+        if (vec[i].weight() + b.dlow < eps) b.nlow++;
+        if (vec[i+1].weight() + b.dup < eps) b.nup++;
+    }
+    // likelihood at the boundaries?
+    b.llow = loglDelta(vec, b.dlow);
+    b.lup = loglDelta(vec, b.dup);
+    return b;
 }
 
-
-
-// THIS NEEDS TO BE UPDATED TO GET THE CORRECT CONDITIONAL DISTRIBUTION
-// samples delta from conditional distribution
+// given a vector of edge pointers, will sample a delta from its conditional distribution
 double Graph::sampleDelta(vector<Edge *> &vec)
 {
-    DeltaRange dr = getDeltaRange(vec);
-    Zeros z = getZeros(vec, dr);
-    if (z.low + z.up < 3)
+    double Delta;
+    Boundary b = getBoundaryData(vec);
+    if (b.nlow + b.nup < 3)
     {
         // compute lambda_marg
         double lambda_marg = 0.0;
         for (int i = 0; i < vec.size() - 1; i += 2)
             lambda_marg += vec[i].lambda() - vec[i+1].lambda();
-        if (fabs(lambda_marg) < eps) lambda_marg = 0.0;
-        
+        // correct for numerical errors
+        if (fabs(lambda_marg) < eps) lambda_marg = 0.;
+        // calculate case probabilities
+        double pall= loglDelta(vec, (b.dlow + b.dup)/2.); 
+        double len = b.dup - b.dlow;
+        if (lambda_marg == 0.) pall += log(len);
+        else pall += log(-1./lambda_marg*(exp(-lambda_marg*(len/2.))-exp(-lambdamarg*(-len/2.))));
+
+        // normalise for better computational stability
+        double maxval = max(pall, max(b.llow, b.lup));
+        pall = exp(pall - maxval);
+        b.llow = exp(b.llow - maxval);
+        b.lup = exp(b.lup - maxval);
+
+        uniform_real_distribution<double> dist(0.0, 1.0);
+        double u = dist(generator_)*(pall + b.llow + b.lup);
+
+        if (pall >= u) return extExp(b, lambda_marg); // sample from extendended exponential
+        if (pall + b.llow >= u) return b.dlow; // return delta low
+        else return b.dup; // return delta up
     }
+    else if (b.nlow > b.nup) return b.dlow;
+    else if (b.nlow < b.nup) return b.dup;
+    else 
+    {
+        uniform_real_distribution<double> dist(0.0, 1.0);
+        double u = dist(generator_)*(b.llow + b.lup);
+        if(b.llow >= u) return b.dlow;
+        else return b.dup;
     }
 }
 
+// applies delta along a cycle
 void Graph::updateWeights(vector<Edge *> &vec, double delta)
 {
-  for (int i = 0; i != vec.size(); ++i)
-      if (i % 2) vec[i]->weight(vec[i]->weight() - delta);
-      else vec[i]->weight(vec[i]->weight() + delta);
+  for (int i = 0; i < vec.size() - 1; i += 2)
+  {
+      vec[i]->weight(vec[i]->weight() + delta);
+      vec[i+1]->weight(vec[i+1]->weight() - delta);
+  }
 }
 
 
 // computes log unconditional density of delta along a vector
 double Graph::loglDelta(vector<Edge*> &vec, double delta)
 {
-    double res = 0.0;
+    double res = 0.;
     for (int i = 0; i != vec.size(); ++i)
     {
         double val = vec[i]->weight();
         if (i % 2) val -= delta;
         else val += delta;
-        if (val < eps) res += log(1.-vec[i]->p());
+        if (val < eps) res += log(1. - vec[i]->p());
         else    res += log(vec[i]->p()) + log(vec[i]->lambda()) - vec[i]->lambda()*val;
     }
     return res;
@@ -219,25 +255,13 @@ double Graph::loglDelta(vector<Edge*> &vec, double delta)
 
 // generates a r.v. from an extended exponential distribution
 // uses the inversion method
-double Graph::extExp(DeltaRange dr, double lambda_marg)
+double Graph::extExp(Boundary b, double lambda_marg)
 {
-    uniform_real_distribution<double> dist(0.0,1.0);
+    uniform_real_distribution<double> dist(0.,1.);
     double u = dist(generator_);
-    if (lambda_marg = 0.0) return dr.low + u*(dr.up - dr.low);
-    else return -log((1-u)*exp(-lambda_marg*dr.low + u*exp(-lambda_marg*dr.up)))/lambda_marg;
+    if (lambda_marg = 0.) return b.dlow + u*(b.dup - b.dlow);
+    else return -log((1. - u)*exp(-lambda_marg*b.dlow) + u*exp(-lambda_marg*b.dup))/lambda_marg;
 }
-
-// computes number of zeros induced at boundaries.
-Zeros Graph::getZeros(vector<Edge*> &vec, DeltaRange dr)
-{
-    Zeros z;
-    for (int i = 0; i != vec.size(); ++i)
-        if (i % 2) if (vec[i].weight() + dr.up < eps) z.up++;
-        else  if (vec[i].weight() + dr.low < eps) z.low++;
-    return z;
-}
-
-
 
 
 
