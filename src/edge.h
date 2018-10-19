@@ -21,7 +21,7 @@ public:
     int fixed() const { return fixed_; }
     double weight() const {return weight_; }
     double p() const {return p_; }
-    double lambda() const {return lambda; }
+    double lambda() const {return lambda_; }
     void weight(double w);
     void setHeadPos(int const head_pos) { head_pos_ = head_pos; }
     void setTailPos(int const tail_pos) { tail_pos_ = tail_pos; }

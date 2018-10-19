@@ -16,19 +16,23 @@ struct Boundary
     unsigned int nlow, nup;
     Boundary()
       : dlow(-DBL_MAX), 
-        dup(DBL_MAX), 
-        nlow(0), 
-        nup(0),
+        dup(DBL_MAX),
         llow(0.),
-        lup(0.)
+        lup(0.),
+        nlow(0), 
+        nup(0)
   {
   }
-}
+};
 
 class Graph 
 {
 public:
-    Graph(Rcpp::NumericMatrix weight_matrix, Rcpp::IntegerMatrix fixed);
+    Graph(Rcpp::NumericMatrix weight_matrix, 
+          Rcpp::NumericMatrix p, 
+          Rcpp::NumericMatrix lambda, 
+          Rcpp::IntegerMatrix fixed,
+          double eps = 1e-9);
     Rcpp::List sample(int nsamples = 10000, int thin = 10, int burnin = 5000, bool sparse = FALSE);
     void summary() const;
     void sampleStep();
@@ -41,10 +45,11 @@ private:
     int sampleEdge(Vertex* v, std::vector<Edge*>& vec);
     void reset(std::vector<Edge *> &vec);
     void updateWeights(std::vector<Edge *> &vec, double delta);
-    double sampleDelta(const DeltaRange& dr);
-    double loglDelta(vector<Edge*> &vec, double delta);
+    double sampleDelta(std::vector<Edge *> &vec);
+    double loglDelta(std::vector<Edge*> &vec, double delta);
     double extExp(Boundary b, double lambda_marg);
     int m_, n_;
+    double eps_;
     std::default_random_engine generator_;
     std::vector<Vertex> vertices_;
     std::vector<Vertex*> initial_vertices_;

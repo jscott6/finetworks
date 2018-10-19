@@ -10,14 +10,13 @@ using IM = IntegerMatrix;
 using NV = NumericVector;
 using NM = NumericMatrix;
 
-double eps = 1e-9;
-
-Graph::Graph(NM weight_matrix, IM fixed):
+Graph::Graph(NM weight_matrix, NM p, NM lambda, IM fixed, double eps):
     generator_(initGenerator())
 {
     checks(weight_matrix, fixed);
     m_ = weight_matrix.nrow();
     n_ = weight_matrix.ncol();
+    eps_ = eps;
     vertices_ = vector<Vertex>(m_+n_);
     for (int i = 0; i != m_ + n_; ++i)
         vertices_[i].index = i;
@@ -30,7 +29,7 @@ Graph::Graph(NM weight_matrix, IM fixed):
     for (int i = 0; i != m_; ++i)
         for(int j = 0; j != n_; ++j)
             new (&edges_[i][j]) Edge(&vertices_[m_+j], &vertices_[i], 
-                                  weight_matrix(i,j), fixed(i,j));
+                                  weight_matrix(i,j), fixed(i,j), p(i,j), lambda(i,j));
     // initialise initial_vertices_
     for (int i = m_; i != m_ + n_; ++i)
         if (vertices_[i].edges.size())
@@ -175,8 +174,8 @@ Boundary Graph::getBoundaryData(vector<Edge*> &vec)
     // how many edges deleted at boundaries?
     for (int i = 0; i < vec.size() - 1; i += 2)
     {
-        if (vec[i].weight() + b.dlow < eps) b.nlow++;
-        if (vec[i+1].weight() + b.dup < eps) b.nup++;
+        if (vec[i]->weight() + b.dlow < eps_) b.nlow++;
+        if (vec[i+1]->weight() + b.dup < eps_) b.nup++;
     }
     // likelihood at the boundaries?
     b.llow = loglDelta(vec, b.dlow);
@@ -187,21 +186,20 @@ Boundary Graph::getBoundaryData(vector<Edge*> &vec)
 // given a vector of edge pointers, will sample a delta from its conditional distribution
 double Graph::sampleDelta(vector<Edge *> &vec)
 {
-    double Delta;
     Boundary b = getBoundaryData(vec);
     if (b.nlow + b.nup < 3)
     {
         // compute lambda_marg
         double lambda_marg = 0.0;
         for (int i = 0; i < vec.size() - 1; i += 2)
-            lambda_marg += vec[i].lambda() - vec[i+1].lambda();
+            lambda_marg += vec[i]->lambda() - vec[i+1]->lambda();
         // correct for numerical errors
-        if (fabs(lambda_marg) < eps) lambda_marg = 0.;
+        if (fabs(lambda_marg) < eps_) lambda_marg = 0.;
         // calculate case probabilities
         double pall= loglDelta(vec, (b.dlow + b.dup)/2.); 
         double len = b.dup - b.dlow;
         if (lambda_marg == 0.) pall += log(len);
-        else pall += log(-1./lambda_marg*(exp(-lambda_marg*(len/2.))-exp(-lambdamarg*(-len/2.))));
+        else pall += log(-1./lambda_marg*(exp(-lambda_marg*(len/2.))-exp(-lambda_marg*(-len/2.))));
 
         // normalise for better computational stability
         double maxval = max(pall, max(b.llow, b.lup));
@@ -247,8 +245,8 @@ double Graph::loglDelta(vector<Edge*> &vec, double delta)
         double val = vec[i]->weight();
         if (i % 2) val -= delta;
         else val += delta;
-        if (val < eps) res += log(1. - vec[i]->p());
-        else    res += log(vec[i]->p()) + log(vec[i]->lambda()) - vec[i]->lambda()*val;
+        if (val < eps_) res += log(1. - vec[i]->p());
+        else res += log(vec[i]->p()) + log(vec[i]->lambda()) - vec[i]->lambda()*val;
     }
     return res;
 }
@@ -259,7 +257,7 @@ double Graph::extExp(Boundary b, double lambda_marg)
 {
     uniform_real_distribution<double> dist(0.,1.);
     double u = dist(generator_);
-    if (lambda_marg = 0.) return b.dlow + u*(b.dup - b.dlow);
+    if (lambda_marg == 0.) return b.dlow + u*(b.dup - b.dlow);
     else return -log((1. - u)*exp(-lambda_marg*b.dlow) + u*exp(-lambda_marg*b.dup))/lambda_marg;
 }
 
