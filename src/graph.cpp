@@ -58,9 +58,15 @@ void Graph::sampleStep()
 {
     vector<Edge*> cycle;
     int discard = sampleKernel(cycle);
-    reset(cycle);
-    if (discard) return;
+    if (discard)
+    {
+        reset(cycle);
+        return;
+    }
+    //for(const auto & e: cycle)
+    //    printEdgeData(*e);
     updateWeights(cycle, sampleDelta(cycle));
+    reset(cycle);
 }
 
 // reset vertex positions for new sampling step
@@ -91,6 +97,7 @@ NM Graph::weight_matrix() const
     for (int i = 0; i != m_; ++i)
         for (int j = 0; j != n_; ++j)
             wm(i,j) = edges_[i][j].weight();
+
     return wm;
 }
 
@@ -187,6 +194,13 @@ Boundary Graph::getBoundaryData(vector<Edge*> &vec)
 double Graph::sampleDelta(vector<Edge *> &vec)
 {
     Boundary b = getBoundaryData(vec);
+
+
+    // Rcout << "Delta Range: (" << b.dlow << "," << b.dup << ")" << endl;
+    // Rcout << "N: (" << b.nlow << "," << b.nup << ")" << endl;
+    // Rcout << "Likelihood: (" << b.llow << "," << b.lup << ")" << endl;
+
+
     if (b.nlow + b.nup < 3)
     {
         // compute lambda_marg
@@ -195,6 +209,8 @@ double Graph::sampleDelta(vector<Edge *> &vec)
             lambda_marg += vec[i]->lambda() - vec[i+1]->lambda();
         // correct for numerical errors
         if (fabs(lambda_marg) < eps_) lambda_marg = 0.;
+
+        //Rcout << "lambda_marg: " << lambda_marg << endl;
         // calculate case probabilities
         double pall= loglDelta(vec, (b.dlow + b.dup)/2.); 
         double len = b.dup - b.dlow;
@@ -228,6 +244,7 @@ double Graph::sampleDelta(vector<Edge *> &vec)
 // applies delta along a cycle
 void Graph::updateWeights(vector<Edge *> &vec, double delta)
 {
+    //Rcout << "Delta: " << delta << endl;
   for (int i = 0; i < vec.size() - 1; i += 2)
   {
       vec[i]->weight(vec[i]->weight() + delta);
