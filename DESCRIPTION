@@ -8,7 +8,7 @@ Author@R: c(
 	person("Gandy", "Axel", email = "a.gandy@imperial.ac.uk", role = "aut"))
 Maintainer: James Scott <james.scott15@imperial.ac.uk>
 Description: This package 
-License: MIT
+License: GPL-3
 Depends: Matrix
 Imports: methods, Rcpp (>= 0.12.14)
 LinkingTo: Rcpp, RcppArmadillo

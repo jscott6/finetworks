@@ -50,7 +50,7 @@ FinNet_from_strengths <- function(out_strength, in_strength, p, lambda, fixed, e
   
   print(res[[2]])
   res[[2]] <- get_fixed_matrix(res[[1]], res[[2]])
-  matrix_checks(res[[1]], res[[2]])
+  matrix_checks(res[[1]], res[[2]], lambda, fixed)
   new(FinNet, res[[1]], res[[2]])
   
 }
