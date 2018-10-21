@@ -49,7 +49,7 @@ FinNet_from_strengths <- function(out_strength, in_strength, p, lambda, fixed, e
   if(!valid) stop("No network exists with the specified data")
   
   print(res[[2]])
-  res[[2]] <- get_fixed_matrix(res[[1]], res[[2]])
+  res[[2]] <- get_fixed_matrix(res[[1]], p, lambda, res[[2]])
   matrix_checks(res[[1]], p, lambda, res[[2]])
   new(FinNet, res[[1]], p, lambda, res[[2]])
   
