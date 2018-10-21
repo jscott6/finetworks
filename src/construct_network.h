@@ -2,7 +2,7 @@
 #ifndef GUARD_construct_network
 #define GUARD_construct_network
 
-#include <Rcpp.h>
+#include <RcppArmadillo.h>
 #include <vector>
 #include <queue>
 
