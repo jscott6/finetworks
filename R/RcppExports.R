@@ -5,3 +5,7 @@ constructNetwork <- function(out_strength, in_strength, df) {
     .Call('_finetworks_constructNetwork', PACKAGE = 'finetworks', out_strength, in_strength, df)
 }
 
+constructMatrix <- function(rowSums, colSums, fixed) {
+    .Call('_finetworks_constructMatrix', PACKAGE = 'finetworks', rowSums, colSums, fixed)
+}
+

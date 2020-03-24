@@ -3,11 +3,11 @@ Type: Package
 Title: Bayesian Network Tomography for Financial Networks
 Version: 0.0.0.9000
 Date: 2018-10-11
-Author@R: c(
+Authors@R: c(
 	person("Scott", "James", email="james.scott15@imperial.ac.uk", role = c("aut","cre")),
 	person("Gandy", "Axel", email = "a.gandy@imperial.ac.uk", role = "aut"))
 Maintainer: James Scott <james.scott15@imperial.ac.uk>
-Description: This package 
+Description: To Do.  
 License: GPL-3
 Depends: Matrix
 Imports: methods, Rcpp (>= 0.12.14)

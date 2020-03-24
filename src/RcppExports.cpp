@@ -19,11 +19,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// constructMatrix
+int constructMatrix(NumericVector rowSums, NumericVector colSums, DataFrame fixed);
+RcppExport SEXP _finetworks_constructMatrix(SEXP rowSumsSEXP, SEXP colSumsSEXP, SEXP fixedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type rowSums(rowSumsSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type colSums(colSumsSEXP);
+    Rcpp::traits::input_parameter< DataFrame >::type fixed(fixedSEXP);
+    rcpp_result_gen = Rcpp::wrap(constructMatrix(rowSums, colSums, fixed));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 RcppExport SEXP _rcpp_module_boot_graph_module();
 
 static const R_CallMethodDef CallEntries[] = {
     {"_finetworks_constructNetwork", (DL_FUNC) &_finetworks_constructNetwork, 3},
+    {"_finetworks_constructMatrix", (DL_FUNC) &_finetworks_constructMatrix, 3},
     {"_rcpp_module_boot_graph_module", (DL_FUNC) &_rcpp_module_boot_graph_module, 0},
     {NULL, NULL, 0}
 };
