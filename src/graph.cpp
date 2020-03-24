@@ -136,15 +136,15 @@ IM Graph::fixed() const
 }
 
 
-// Attempt at the new algorithm
-Edge* Graph::sampleEdge(Vertex* v, Edge* e)
-{
-    uniform_int_distribution<int> dist(0, v->edges.size() - 1);
-    Edge* edge = v->edges[dist(generator_)];
-    if (edge == e ) edge = v->edges.back();
-    if (edge->head.visited) sampleEdge(v, e);
-    else return e;
-}
+// // Attempt at the new algorithm
+// Edge* Graph::sampleEdge(Vertex* v, Edge* e)
+// {
+//     uniform_int_distribution<int> dist(0, v->edges.size() - 1);
+//     Edge* edge = v->edges[dist(generator_)];
+//     if (edge == e ) edge = v->edges.back();
+//     if (edge->head.visited) sampleEdge(v, e);
+//     else return e;
+// }
 
 // samples a new edge uniformly
 // remove the edge from consideration here-on-in
