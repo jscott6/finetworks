@@ -10,9 +10,9 @@
 
 std::default_random_engine initGenerator();
 
-void checks(Rcpp::NumericMatrix weight_matrix, Rcpp::IntegerMatrix fixed);
-void printEdgeData(Edge const &e);
-void printVertexData(Vertex const &v);
+//void checks(Rcpp::NumericMatrix weight_matrix, Rcpp::IntegerMatrix fixed);
+//void printEdgeData(Edge const &e);
+//void printVertexData(Vertex const &v);
 Rcpp::List constructNetwork(Rcpp::NumericVector in_strength, 
                             Rcpp::NumericVector out_strength, Rcpp::DataFrame df);
 

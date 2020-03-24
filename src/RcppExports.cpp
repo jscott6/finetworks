@@ -20,14 +20,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // constructMatrix
-int constructMatrix(NumericVector rowSums, NumericVector colSums, DataFrame fixed);
+int constructMatrix(const NumericVector& rowSums, const NumericVector& colSums, const DataFrame& fixed);
 RcppExport SEXP _finetworks_constructMatrix(SEXP rowSumsSEXP, SEXP colSumsSEXP, SEXP fixedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type rowSums(rowSumsSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type colSums(colSumsSEXP);
-    Rcpp::traits::input_parameter< DataFrame >::type fixed(fixedSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type rowSums(rowSumsSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type colSums(colSumsSEXP);
+    Rcpp::traits::input_parameter< const DataFrame& >::type fixed(fixedSEXP);
     rcpp_result_gen = Rcpp::wrap(constructMatrix(rowSums, colSums, fixed));
     return rcpp_result_gen;
 END_RCPP

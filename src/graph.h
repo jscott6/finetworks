@@ -33,27 +33,27 @@ public:
           Rcpp::NumericMatrix lambda, 
           Rcpp::IntegerMatrix fixed,
           double eps = 1e-9);
-    Rcpp::List sample(int nsamples = 10000, int thin = 10, int burnin = 5000, bool sparse = FALSE);
-    void summary() const;
-    void sampleStep();
+    //Rcpp::List sample(int nsamples = 10000, int thin = 10, int burnin = 5000, bool sparse = FALSE);
+    //void summary() const;
+    //void sampleStep();
     Rcpp::NumericMatrix weight_matrix() const;
     arma::sp_mat sparse_weight_matrix() const;
     Rcpp::IntegerMatrix fixed() const;
 private:
-    Boundary getBoundaryData(std::vector<Edge*>& vec);
+    //Boundary getBoundaryData(std::vector<Edge*>& vec);
     int sampleKernel(std::vector<Edge*>& vec);
-    int sampleEdge(Vertex* v, std::vector<Edge*>& vec);
+    Edge* Graph::sampleEdge(Vertex* v, Edge* e);
     void reset(std::vector<Edge *> &vec);
-    void updateWeights(std::vector<Edge *> &vec, double delta);
-    double sampleDelta(std::vector<Edge *> &vec);
-    double loglDelta(std::vector<Edge*> &vec, double delta);
-    double extExp(Boundary b, double lambda_marg);
+    //void updateWeights(std::vector<Edge *> &vec, double delta);
+    //double sampleDelta(std::vector<Edge *> &vec);
+    //double loglDelta(std::vector<Edge*> &vec, double delta);
+    //double extExp(Boundary b, double lambda_marg);
     int m_, n_;
     double eps_;
     std::default_random_engine generator_;
     std::vector<Vertex> vertices_;
-    std::vector<Vertex*> initial_vertices_;
-    Edge** edges_;
+    std::vector<std::vector<Edge*> > edges_;
+    std::vector<Edge*> edge_list_;
 };
 
 #endif
