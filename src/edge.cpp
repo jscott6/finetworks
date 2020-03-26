@@ -6,9 +6,9 @@ using namespace std;
 
 double const EPS = 1e-9;
 
-Edge::Edge(Vertex* const head, Vertex* const tail, vector<Edge*>* edge_list, double const weight, int const fixed, double const p, double const lambda):
-    head_(head), 
+Edge::Edge(Vertex* const tail, Vertex* const head, vector<Edge*>* edge_list, double const weight, int const fixed, double const p, double const lambda): 
     tail_(tail), 
+    head_(head),
     edge_list_(edge_list),
     weight_(weight), 
     p_(p),
@@ -23,10 +23,10 @@ Edge::Edge(Vertex* const head, Vertex* const tail, vector<Edge*>* edge_list, dou
 void Edge::add() 
 {
     // add to head vertex
-    setHeadPos(head_->edges.size());
+    setPos(head_->edges.size(), vcol);
     head_->edges.push_back(this);
     // add to tail vertex
-    setTailPos(tail_->edges.size());
+    setPos(tail_->edges.size(), vrow);
     tail_->edges.push_back(this);
     // add to edge list
     setEdgeListPos(edge_list_->size());
@@ -36,11 +36,11 @@ void Edge::add()
 void Edge::remove() 
 {
     // remove from head datastructure
-    head_->edges.back()->setHeadPos(head_pos_);
+    head_->edges.back()->setPos(head_pos_, vcol);
     swap(head_->edges[head_pos_], head_->edges.back());
     head_->edges.pop_back();
     // remove from tail datastructure
-    tail_->edges.back()->setTailPos(tail_pos_);
+    tail_->edges.back()->setPos(tail_pos_, vrow);
     swap(tail_->edges[tail_pos_], tail_->edges.back());
     tail_->edges.pop_back();
     // remove from edge list

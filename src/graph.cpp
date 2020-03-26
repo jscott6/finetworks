@@ -1,6 +1,7 @@
 
 #include "graph.h"
 #include "auxiliary.h"
+#include <unistd.h>
 
 using namespace std;
 using namespace Rcpp;
@@ -10,21 +11,25 @@ using IM = IntegerMatrix;
 using NV = NumericVector;
 using NM = NumericMatrix;
 
-Graph::Graph(NM weight_matrix, NM p, NM lambda, IM fixed, double eps):
+int const FAIL = 1;
+int const OK = 0;
+
+void printEdge(Edge* const edge);
+
+Graph::Graph(NM wm, NM p, NM lambda, IM fixed, double eps):
+    m_(wm.nrow()),
+    n_(wm.ncol()),
+    eps_(eps),
     generator_(initGenerator())
 {
-    m_ = weight_matrix.nrow();
-    n_ = weight_matrix.ncol();
-    eps_ = eps;
-    vertices_ = vector<Vertex>(m_ + n_);
-    for (int i = 0; i != m_ + n_; ++i)
-        vertices_[i].index = i;
+    for (int i = 0; i != m_; ++i) rows_.push_back(Vertex(i, vrow));
+    for (int j = 0; j != n_; ++j) cols_.push_back(Vertex(j, vcol));
 
     edges_ = vector<vector<Edge*> >(m_, vector<Edge*>(n_));
     for (int i = 0; i != m_; ++i)
         for(int j = 0; j != n_; ++j)
-            edges_[i][j] = new Edge(&vertices_[m_+j], &vertices_[i], &edge_list_,
-                                  weight_matrix(i,j), fixed(i,j), p(i,j), lambda(i,j));
+            edges_[i][j] = new Edge(&rows_[i], &cols_[j], &edge_list_,
+                                  wm(i,j), fixed(i,j), p(i,j), lambda(i,j));
 }
 
 // // performs multiple sampling steps, returning a weights matrix
@@ -41,29 +46,26 @@ Graph::Graph(NM weight_matrix, NM p, NM lambda, IM fixed, double eps):
 // }
 
 // // performs a single sampling step
-// void Graph::sampleStep() 
-// {
-//     vector<Edge*> cycle;
-//     int discard = sampleKernel(cycle);
-//     if (discard)
-//     {
-//         reset(cycle);
-//         return;
-//     }
-//     //for(const auto & e: cycle)
-//     //    printEdgeData(*e);
-//     updateWeights(cycle, sampleDelta(cycle));
-//     reset(cycle);
-// }
-
-// restore vertices for new sampling step
-void Graph::reset(vector<Edge *> &vec)
+void Graph::sampleStep() 
 {
-  for(auto &e : vec)
-  {
-      e->head()->visited = false;
-      e->tail()->visited = false;
-  }
+    int L = m_;
+    vector<Edge*> cycle;
+    cycle.reserve(2 * L);
+    int discard = sampleKernel(cycle, L);
+    Rcout << "Discarded: " << discard << endl;
+
+    for(auto& e : cycle)
+    {
+        e->ends(vrow)->visited = false;
+        e->ends(vcol)->visited = false;
+    }
+
+    for (const auto& e: cycle) printEdge(e);
+
+    if (discard) return;
+    
+    //updateWeights(cycle, sampleDelta(cycle));
+    return;
 }
 
 // reconstructs weight matrix from internal datastructure
@@ -77,6 +79,7 @@ NM Graph::weight_matrix() const
     return wm;
 }
 
+
 // reconstructs a sparse matrix representation from internal datastructure
 sp_mat Graph::sparse_weight_matrix() const
 {
@@ -86,11 +89,11 @@ sp_mat Graph::sparse_weight_matrix() const
 
     int k = 0;
     for (int i = 0; i != m_; ++i)
-        for (const auto e: vertices_[i].edges)
+        for (const auto e: rows_[i].edges)
         {
             // store locations
             locations(0,k) = i;
-            locations(1,k) = e->head()->index - m_;
+            locations(1,k) = e->ends(vcol)->index;
             // store corresponding values
             values(k) = e->weight();
             k++;
@@ -108,47 +111,56 @@ IM Graph::fixed() const
     return fm;
 }
 
-// // // Sample an edge to an unvisited vertex.  
-// Edge* Graph::sampleEdge(Vertex* v, Edge* e)
-// {
-//     uniform_int_distribution<int> dist(0, v->edges.size() - 1);
-//     Edge* edge = v->edges[dist(generator_)];
-//     if (edge == e ) edge = v->edges.back();
-//     if (edge->head.visited) sampleEdge(v, e);
-//     else return e;
-// }
+// Sample an edge to an unvisited vertex.
+// pos is the index of the final edge that can be sampled.  
+int Graph::sampleEdge(Vertex* v, vector<Edge*>& vec, int pos)
+{
+    if (pos == 0) return FAIL;
+    uniform_int_distribution<int> dist(0, pos - 1);
+    int idx = dist(generator_);
+    Edge* edge = v->edges[idx];
+    if (edge == vec.back()) edge = v->edges[pos];
 
-// int Graph::sampleKernel(vector<Edge*>& vec)
-// {
-//     int L = 3;
-//     vec.push_back(sampleFromVector(edge_list_, generator_);
-//     for (int k = 2; k != L + 1; k++)
-//     {
-//         if (vec.back()->tail()->edges.size() == 1) return 1;
-//         sampleEdge(vec.back()->tail(), vec.back());
-//     } 
+    VertexType a = static_cast<VertexType>(1 - v->vtype);
+    if (edge->ends(a)->visited) {
+        edge->setPos(idx, a);
+        v->edges[pos]->setPos(pos, a);
+        v->edges[idx] = v->edges[pos];
+        v->edges[pos] = edge;
+        return sampleEdge(v, vec, pos - 1);
+    }
+    vec.push_back(edge);
+    return OK;
+}
 
-// }
+int Graph::sampleKernel(vector<Edge*>& vec, int L)
+{
+    vec.push_back(sampleFromVector(edge_list_, generator_));
+    Vertex *u = vec.back()->ends(vrow), *v = vec.back()->ends(vcol);
+    v->visited = true;
+    u->visited = true;
+
+    for (int k = 1; k != L; k++)
+    {
+        if (sampleEdge(u, vec, u->edges.size() - 1)) return FAIL;
+        u = vec.back()->ends(vcol);
+        u->visited = true;
+        if (sampleEdge(u, vec, u->edges.size() - 1)) return FAIL;
+        u = vec.back()->ends(vrow);
+        u->visited = true;
+    }
+    Edge* e = edges_[u->index][v->index];
+    if (e->fixed()) return FAIL; 
+    vec.push_back(e);
+    return OK;
+}
 
 
-// // samples a kernel along which we perform an update
-// int Graph::sampleKernel(vector<Edge*>& vec)
-// {
-//     Vertex* u0 = sampleFromVector(initial_vertices_, generator_);
-//     Edge* e;
-//     if(sampleEdge(u0, vec)) return 1;
-//     if(sampleEdge(vec.back()->tail(), vec)) return 1;
-
-//     while(vec.back()->head() != u0)
-//     {
-//         if(sampleEdge(vec.back()->head(), vec)) return 1;
-//         // attempt to close cycle
-//         e = &edges_[vec.back()->tail()->index][u0->index - m_];
-//         if(!e->fixed()) vec.push_back(e);
-//         else if(sampleEdge(vec.back()->tail(), vec)) return 1;
-//     }
-//     return 0;
-// }
+void printEdge(Edge* const edge) 
+{
+    Rcout << "Weight: " << edge->weight() << " Loc: (" << edge->ends(vrow)->index + 1 << "," << edge->ends(vcol)->index + 1 << ")" << endl;
+    usleep(100000);
+}
 
 // // given a cycle, computes required data from the edge cases
 // Boundary Graph::getBoundaryData(vector<Edge*> &vec)
