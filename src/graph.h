@@ -3,7 +3,6 @@
 #define GUARD_graph
 
 #include <RcppArmadillo.h>
-#include <random>
 #include <float.h>
 #include <algorithm>
 #include "edge.h"
@@ -28,12 +27,13 @@ struct Boundary
 class Graph 
 {
 public:
-    Graph(Rcpp::NumericMatrix weight_matrix, 
-          Rcpp::NumericMatrix p, 
-          Rcpp::NumericMatrix lambda, 
-          Rcpp::IntegerMatrix fixed,
+    Graph(Rcpp::NumericMatrix const &weight_matrix, 
+          Rcpp::NumericMatrix const &p, 
+          Rcpp::NumericMatrix const &lambda, 
+          Rcpp::IntegerMatrix const &fixed,
           double eps = 1e-9);
-    //Rcpp::List sample(int nsamples = 10000, int thin = 10, int burnin = 5000, bool sparse = FALSE);
+    ~Graph();
+    Rcpp::List sample(int nsamples = 10000, int thin = 10, int burnin = 5000, bool sparse = FALSE);
     //void summary() const;
     void sampleStep();
     Rcpp::NumericMatrix weight_matrix() const;
@@ -48,7 +48,6 @@ private:
     //double loglDelta(std::vector<Edge*> &vec, double delta);
     //double extExp(Boundary b, double lambda_marg);
     double eps_;
-    std::default_random_engine generator_;
     std::vector<Vertex> rows_, cols_;
     std::vector<std::vector<Edge*> > edges_;
     std::vector<Edge*> edge_list_;

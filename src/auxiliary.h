@@ -2,13 +2,9 @@
 #ifndef GUARD_auxiliary
 #define GUARD_auxiliary
 
-#include <random>
 #include <RcppArmadillo.h>
 #include "graph.h"
 #include "construct_network.h"
-
-
-std::default_random_engine initGenerator();
 
 //void checks(Rcpp::NumericMatrix weight_matrix, Rcpp::IntegerMatrix fixed);
 //void printEdgeData(Edge const &e);
@@ -16,14 +12,22 @@ std::default_random_engine initGenerator();
 Rcpp::List constructNetwork(Rcpp::NumericVector in_strength, 
                             Rcpp::NumericVector out_strength, Rcpp::DataFrame df);
 
+
+
+
+// Uniformly samples an integer from 0 up to and including n
+int sampleInt(int n);
+
+
 // generic function to sample from a vector
 // given some vector, return a random (uniform) element from it
 // Assumes vector is non-empty
 template <class T>
-T sampleFromVector(const std::vector<T> &vec, std::default_random_engine &gen)
+T sampleFromVector(const std::vector<T> &vec)
 {
-  std::uniform_int_distribution<int> dist(0, vec.size() - 1);
-  return vec[dist(gen)];
+  return vec[sampleInt(vec.size() - 1)];
 }
+
+
 
 #endif

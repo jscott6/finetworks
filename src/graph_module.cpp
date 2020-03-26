@@ -12,7 +12,7 @@ RCPP_MODULE(graph_module)
     .property("sparse_weight_matrix", &Graph::sparse_weight_matrix, "Returns sparse representation of matrix of edge weights")
     .property("fixed", &Graph::fixed, "Returns matrix showing which edges are fixed")
     .method("sampleStep", &Graph::sampleStep, "Performs a single sampling step")
-    //.method("sample", &Graph::sample, "Performs mutliple sampling steps")
+    .method("sample", &Graph::sample, "Performs mutliple sampling steps")
     ;
 }
 

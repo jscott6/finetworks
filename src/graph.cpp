@@ -7,18 +7,13 @@ using namespace std;
 using namespace Rcpp;
 using namespace arma;
 
-using IM = IntegerMatrix;
-using NV = NumericVector;
-using NM = NumericMatrix;
-
 int const FAIL = 1;
 int const OK = 0;
 
 void printEdge(Edge* const edge);
 
-Graph::Graph(NM wm, NM p, NM lambda, IM fixed, double eps):
-    eps_(eps),
-    generator_(initGenerator())
+Graph::Graph(NumericMatrix const &wm, NumericMatrix const &p, NumericMatrix const &lambda, IntegerMatrix const &fixed, double eps):
+    eps_(eps)
 {
     for (int i = 0; i != wm.nrow(); ++i) rows_.push_back(Vertex(i, vrow));
     for (int j = 0; j != wm.ncol(); ++j) cols_.push_back(Vertex(j, vcol));
@@ -30,18 +25,27 @@ Graph::Graph(NM wm, NM p, NM lambda, IM fixed, double eps):
                                   wm(i,j), fixed(i,j), p(i,j), lambda(i,j));
 }
 
-// // performs multiple sampling steps, returning a weights matrix
-// List Graph::sample(int nsamples, int thin, int burnin, bool sparse) 
-// {
-//     List results(nsamples);
-//     for (int i = 0; i != nsamples; ++i) {
-//         for(int j = 0; j != (thin + 1); ++j)
-//             sampleStep();
-//         if(sparse) results(i) = sparse_weight_matrix();
-//         else results(i) = weight_matrix();
-//     }
-//     return results;
-// }
+Graph::~Graph()
+{
+    for (int i = 0; i != rows_.size(); ++i)
+        for(int j = 0; j != cols_.size(); ++j)
+            delete edges_[i][j];
+}
+
+
+
+// performs multiple sampling steps, returning a weights matrix
+List Graph::sample(int nsamples, int thin, int burnin, bool sparse) 
+{
+    List results(nsamples);
+    for (int i = 0; i != nsamples; ++i) {
+        for(int j = 0; j != (thin + 1); ++j)
+            sampleStep();
+        if(sparse) results(i) = sparse_weight_matrix();
+        else results(i) = weight_matrix();
+    }
+    return results;
+}
 
 // // performs a single sampling step
 void Graph::sampleStep() 
@@ -67,9 +71,9 @@ void Graph::sampleStep()
 }
 
 // reconstructs weight matrix from internal datastructure
-NM Graph::weight_matrix() const
+NumericMatrix Graph::weight_matrix() const
 {
-    NM wm(rows_.size(), cols_.size());
+    NumericMatrix wm(rows_.size(), cols_.size());
     for (int i = 0; i != rows_.size(); ++i)
         for (int j = 0; j != cols_.size(); ++j)
             wm(i,j) = edges_[i][j]->weight();
@@ -100,9 +104,9 @@ sp_mat Graph::sparse_weight_matrix() const
 }
 
 // reconstructs fixed matrix from internal datastructure
-IM Graph::fixed() const
+IntegerMatrix Graph::fixed() const
 {
-    IM fm(rows_.size(), cols_.size());
+    IntegerMatrix fm(rows_.size(), cols_.size());
     for (int i = 0; i != rows_.size(); ++i)
         for (int j = 0; j != cols_.size(); ++j)
             fm(i,j) = edges_[i][j]->fixed();
@@ -114,8 +118,7 @@ IM Graph::fixed() const
 int Graph::sampleEdge(Vertex* v, vector<Edge*>& vec, int pos)
 {
     if (pos == 0) return FAIL;
-    uniform_int_distribution<int> dist(0, pos - 1);
-    int idx = dist(generator_);
+    int idx = sampleInt(pos - 1);
     Edge* edge = v->edges[idx];
     if (edge == vec.back()) edge = v->edges[pos];
 
@@ -133,7 +136,7 @@ int Graph::sampleEdge(Vertex* v, vector<Edge*>& vec, int pos)
 
 int Graph::sampleKernel(vector<Edge*>& vec, int L)
 {
-    vec.push_back(sampleFromVector(edge_list_, generator_));
+    vec.push_back(sampleFromVector(edge_list_));
     Vertex *u = vec.back()->ends(vrow), *v = vec.back()->ends(vcol);
     v->visited = true;
     u->visited = true;
