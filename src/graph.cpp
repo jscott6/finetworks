@@ -17,17 +17,15 @@ int const OK = 0;
 void printEdge(Edge* const edge);
 
 Graph::Graph(NM wm, NM p, NM lambda, IM fixed, double eps):
-    m_(wm.nrow()),
-    n_(wm.ncol()),
     eps_(eps),
     generator_(initGenerator())
 {
-    for (int i = 0; i != m_; ++i) rows_.push_back(Vertex(i, vrow));
-    for (int j = 0; j != n_; ++j) cols_.push_back(Vertex(j, vcol));
+    for (int i = 0; i != wm.nrow(); ++i) rows_.push_back(Vertex(i, vrow));
+    for (int j = 0; j != wm.ncol(); ++j) cols_.push_back(Vertex(j, vcol));
 
-    edges_ = vector<vector<Edge*> >(m_, vector<Edge*>(n_));
-    for (int i = 0; i != m_; ++i)
-        for(int j = 0; j != n_; ++j)
+    edges_ = vector<vector<Edge*> >(rows_.size(), vector<Edge*>(cols_.size()));
+    for (int i = 0; i != rows_.size(); ++i)
+        for(int j = 0; j != cols_.size(); ++j)
             edges_[i][j] = new Edge(&rows_[i], &cols_[j], &edge_list_,
                                   wm(i,j), fixed(i,j), p(i,j), lambda(i,j));
 }
@@ -48,7 +46,7 @@ Graph::Graph(NM wm, NM p, NM lambda, IM fixed, double eps):
 // // performs a single sampling step
 void Graph::sampleStep() 
 {
-    int L = m_;
+    int L = rows_.size();
     vector<Edge*> cycle;
     cycle.reserve(2 * L);
     int discard = sampleKernel(cycle, L);
@@ -71,9 +69,9 @@ void Graph::sampleStep()
 // reconstructs weight matrix from internal datastructure
 NM Graph::weight_matrix() const
 {
-    NM wm(m_, n_);
-    for (int i = 0; i != m_; ++i)
-        for (int j = 0; j != n_; ++j)
+    NM wm(rows_.size(), cols_.size());
+    for (int i = 0; i != rows_.size(); ++i)
+        for (int j = 0; j != cols_.size(); ++j)
             wm(i,j) = edges_[i][j]->weight();
 
     return wm;
@@ -88,7 +86,7 @@ sp_mat Graph::sparse_weight_matrix() const
     vec values(nedges);
 
     int k = 0;
-    for (int i = 0; i != m_; ++i)
+    for (int i = 0; i != rows_.size(); ++i)
         for (const auto e: rows_[i].edges)
         {
             // store locations
@@ -98,15 +96,15 @@ sp_mat Graph::sparse_weight_matrix() const
             values(k) = e->weight();
             k++;
         }
-    return sp_mat(locations, values, m_, n_);
+    return sp_mat(locations, values, rows_.size(), cols_.size());
 }
 
 // reconstructs fixed matrix from internal datastructure
 IM Graph::fixed() const
 {
-    IM fm(m_, n_);
-    for (int i = 0; i != m_; ++i)
-        for (int j = 0; j != n_; ++j)
+    IM fm(rows_.size(), cols_.size());
+    for (int i = 0; i != rows_.size(); ++i)
+        for (int j = 0; j != cols_.size(); ++j)
             fm(i,j) = edges_[i][j]->fixed();
     return fm;
 }
@@ -217,7 +215,7 @@ void printEdge(Edge* const edge)
 //         b.llow = exp(b.llow - maxval);
 //         b.lup = exp(b.lup - maxval);
 
-//         uniform_real_distribution<double> dist(0.0, 1.0);
+//         uniforrows_.size()real_distribution<double> dist(0.0, 1.0);
 //         double u = dist(generator_)*(pall + b.llow + b.lup);
 
 //         if (pall >= u) return extExp(b, lambda_marg); // sample from extendended exponential
@@ -228,7 +226,7 @@ void printEdge(Edge* const edge)
 //     else if (b.nlow < b.nup) return b.dup;
 //     else 
 //     {
-//         uniform_real_distribution<double> dist(0.0, 1.0);
+//         uniforrows_.size()real_distribution<double> dist(0.0, 1.0);
 //         double u = dist(generator_)*(b.llow + b.lup);
 //         if(b.llow >= u) return b.dlow;
 //         else return b.dup;
@@ -266,7 +264,7 @@ void printEdge(Edge* const edge)
 // // uses the inversion method
 // double Graph::extExp(Boundary b, double lambda_marg)
 // {
-//     uniform_real_distribution<double> dist(0.,1.);
+//     uniforrows_.size()real_distribution<double> dist(0.,1.);
 //     double u = dist(generator_);
 //     if (lambda_marg == 0.) return b.dlow + u*(b.dup - b.dlow);
 //     else return -log((1. - u)*exp(-lambda_marg*b.dlow) + u*exp(-lambda_marg*b.dup))/lambda_marg;

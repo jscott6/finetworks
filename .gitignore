@@ -1,1 +1,12 @@
 .vscode
+*~
+.Rhistory
+.DS_Store
+doc
+Meta
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so

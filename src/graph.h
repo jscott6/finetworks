@@ -47,7 +47,6 @@ private:
     //double sampleDelta(std::vector<Edge *> &vec);
     //double loglDelta(std::vector<Edge*> &vec, double delta);
     //double extExp(Boundary b, double lambda_marg);
-    int m_, n_;
     double eps_;
     std::default_random_engine generator_;
     std::vector<Vertex> rows_, cols_;
