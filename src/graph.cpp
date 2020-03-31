@@ -55,7 +55,6 @@ List Graph::sample(int nsamples, int thin, int burnin, bool sparse)
 int Graph::sampleCycleLength()
 {
     double u = R::runif(0.0, 1.0);
-    double v = R::unif_rand();
     int i = 0;
     for (; i != cycle_length_cumprob_.size(); i++)
         if (u <= cycle_length_cumprob_[i])
@@ -279,7 +278,7 @@ double Graph::randExtExp(Boundary b, double lambda_marg)
 {
     if (lambda_marg == 0.) return R::runif(b.dlow, b.dup);
     double u = R::runif(0., 1.);
-    else return -log((1. - u) * exp(-lambda_marg * b.dlow) + u * exp(-lambda_marg * b.dup)) / lambda_marg;
+    return -log((1. - u) * exp(-lambda_marg * b.dlow) + u * exp(-lambda_marg * b.dup)) / lambda_marg;
 }
 
 

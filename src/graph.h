@@ -41,7 +41,7 @@ public:
     arma::sp_mat sparse_weight_matrix() const;
     Rcpp::IntegerMatrix fixed() const;
 private:
-    //Boundary getBoundaryData(std::vector<Edge*>& vec);
+    Boundary getBoundaryData(std::vector<Edge*>& vec);
     int sampleCycleLength();
     int sampleKernel(std::vector<Edge*>& vec, int L);
     int sampleEdge(Vertex* v, std::vector<Edge*>& vec, int pos);
