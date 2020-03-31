@@ -20,9 +20,14 @@ Graph::Graph(NumericMatrix const &wm, NumericMatrix const &p, NumericMatrix cons
 
     edges_ = vector<vector<Edge*> >(rows_.size(), vector<Edge*>(cols_.size()));
     for (int i = 0; i != rows_.size(); ++i)
-        for(int j = 0; j != cols_.size(); ++j)
+        for (int j = 0; j != cols_.size(); ++j)
             edges_[i][j] = new Edge(&rows_[i], &cols_[j], &edge_list_,
                                   wm(i,j), fixed(i,j), p(i,j), lambda(i,j));
+
+    IntegerVector cycle_lengths = seq(2, min(rows_.size(), cols_.size()));
+    NumericVector cycle_length_prob = 1. / as<NumericVector>(cycle_lengths);
+    cycle_length_prob = cycle_length_prob / sum(cycle_length_prob);
+    cycle_length_cumprob_ = cumsum(cycle_length_prob).get();
 }
 
 Graph::~Graph()
@@ -47,10 +52,23 @@ List Graph::sample(int nsamples, int thin, int burnin, bool sparse)
     return results;
 }
 
+int Graph::sampleCycleLength()
+{
+    double u = R::runif(0.0, 1.0);
+    double v = R::unif_rand();
+    int i = 0;
+    for (; i != cycle_length_cumprob_.size(); i++)
+        if (u <= cycle_length_cumprob_[i])
+            break;
+
+    return i + 2;
+}
+
+
 // // performs a single sampling step
 void Graph::sampleStep() 
 {
-    int L = rows_.size();
+    int L = sampleCycleLength();
     vector<Edge*> cycle;
     cycle.reserve(2 * L);
     int discard = sampleKernel(cycle, L);

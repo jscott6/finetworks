@@ -41,6 +41,7 @@ public:
     Rcpp::IntegerMatrix fixed() const;
 private:
     //Boundary getBoundaryData(std::vector<Edge*>& vec);
+    int sampleCycleLength();
     int sampleKernel(std::vector<Edge*>& vec, int L);
     int sampleEdge(Vertex* v, std::vector<Edge*>& vec, int pos);
     //void updateWeights(std::vector<Edge *> &vec, double delta);
@@ -48,6 +49,7 @@ private:
     //double loglDelta(std::vector<Edge*> &vec, double delta);
     //double extExp(Boundary b, double lambda_marg);
     double eps_;
+    Rcpp::NumericVector cycle_length_cumprob_;
     std::vector<Vertex> rows_, cols_;
     std::vector<std::vector<Edge*> > edges_;
     std::vector<Edge*> edge_list_;

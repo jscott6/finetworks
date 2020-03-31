@@ -3,6 +3,7 @@
 #define GUARD_edge
 
 #include <vector>
+#include <RcppCommon.h>
 
 class Edge;
 enum VertexType {vrow, vcol};
@@ -38,5 +39,7 @@ private:
     int col_pos_, row_pos_, edge_list_pos_;
     int const fixed_;
 };
+
+#include <Rcpp.h>
 
 #endif
