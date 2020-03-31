@@ -18,6 +18,10 @@ Rcpp::List constructNetwork(Rcpp::NumericVector in_strength,
 // Uniformly samples an integer from 0 up to and including n
 int sampleInt(int n);
 
+// printing functions for debugging purposes
+void printEdge(Edge* const edge);
+void printVertex(Vertex const &v);
+void printBoundary(Boundary const &b);
 
 // generic function to sample from a vector
 // given some vector, return a random (uniform) element from it

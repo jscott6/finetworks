@@ -5,25 +5,9 @@
 #include <RcppArmadillo.h>
 #include <float.h>
 #include <algorithm>
-#include "edge.h"
+#include "boundary.h"
 
 // [[Rcpp::depends(RcppArmadillo)]]
-
-struct Boundary
-{
-    double dlow, dup;
-    unsigned int nlow, nup;
-    Edge *elow, *eup;
-    Boundary(Edge* e, Edge* f)
-      : dlow(-e->weight()), 
-        dup(f->weight()),
-        nlow(1), 
-        nup(1),
-        elow(e),
-        eup(f)
-  {
-  }
-};
 
 class Graph 
 {
@@ -37,6 +21,9 @@ public:
     Rcpp::List sample(int nsamples = 10000, int thin = 10, int burnin = 5000, bool sparse = FALSE);
     //void summary() const;
     void sampleStep();
+    void debug(bool b) { debug_ = true; }
+    void printRows();
+    void printCols();
     Rcpp::NumericMatrix weight_matrix() const;
     arma::sp_mat sparse_weight_matrix() const;
     Rcpp::IntegerMatrix fixed() const;
@@ -49,6 +36,7 @@ private:
     double sampleDelta(std::vector<Edge *> &vec);
     double randExtExp(Boundary b, double lambda_marg);
     double eps_;
+    bool debug_;
     Rcpp::NumericVector cycle_length_cumprob_;
     std::vector<Vertex> rows_, cols_;
     std::vector<std::vector<Edge*> > edges_;
