@@ -14,13 +14,13 @@ struct Boundary
     double dlow, dup;
     unsigned int nlow, nup;
     Edge *elow, *eup;
-    Boundary()
-      : dlow(-DBL_MAX), 
-        dup(DBL_MAX),
-        nlow(0), 
-        nup(0),
-        elow(NULL),
-        eup(NULL)
+    Boundary(Edge* e, Edge* f)
+      : dlow(-e->weight()), 
+        dup(f->weight()),
+        nlow(1), 
+        nup(1),
+        elow(e),
+        eup(f)
   {
   }
 };
@@ -45,7 +45,7 @@ private:
     int sampleCycleLength();
     int sampleKernel(std::vector<Edge*>& vec, int L);
     int sampleEdge(Vertex* v, std::vector<Edge*>& vec, int pos);
-    //void updateWeights(std::vector<Edge *> &vec, double delta);
+    void updateWeights(std::vector<Edge *> &vec, double delta);
     double sampleDelta(std::vector<Edge *> &vec);
     double randExtExp(Boundary b, double lambda_marg);
     double eps_;

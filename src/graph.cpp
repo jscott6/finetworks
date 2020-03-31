@@ -42,7 +42,14 @@ Graph::~Graph()
 // performs multiple sampling steps, returning a weights matrix
 List Graph::sample(int nsamples, int thin, int burnin, bool sparse) 
 {
+    
     List results(nsamples);
+
+    // burnin phase
+    for (int i = 0; i != nsamples * (thin + 1); i++)
+        sampleStep();
+
+    // sampling phase
     for (int i = 0; i != nsamples; ++i) {
         for(int j = 0; j != (thin + 1); ++j)
             sampleStep();
@@ -71,7 +78,7 @@ void Graph::sampleStep()
     vector<Edge*> cycle;
     cycle.reserve(2 * L);
     int discard = sampleKernel(cycle, L);
-    Rcout << "Discarded: " << discard << endl;
+    //Rcout << "Discarded: " << discard << endl;
 
     for(auto& e : cycle)
     {
@@ -79,11 +86,13 @@ void Graph::sampleStep()
         e->ends(vcol)->visited = false;
     }
 
-    for (const auto& e: cycle) printEdge(e);
-
+    //for (const auto& e: cycle) printEdge(e);
     if (discard) return;
-    
-    //updateWeights(cycle, sampleDelta(cycle));
+
+    //double delta = sampleDelta(cycle);
+    //Rcout << "Delta: " << delta << endl;
+    updateWeights(cycle, sampleDelta(cycle));
+
     return;
 }
 
@@ -175,18 +184,35 @@ int Graph::sampleKernel(vector<Edge*>& vec, int L)
 
 
 void printEdge(Edge* const edge) 
+{ 
+    if (edge == NULL) Rcout << "NULL" << endl;
+    else Rcout << "Weight: " << edge->weight() << " Loc: (" << edge->ends(vrow)->index + 1 << "," << edge->ends(vcol)->index + 1 << ")" << endl;
+    usleep(100000);
+}
+
+void printBoundary(Boundary const &b)
 {
-    Rcout << "Weight: " << edge->weight() << " Loc: (" << edge->ends(vrow)->index + 1 << "," << edge->ends(vcol)->index + 1 << ")" << endl;
+    Rcout << "BOUNDARY DATA" << endl;
+    Rcout << "[nlow, nup] : [" << b.nlow << ", " << b.nup << "]" << endl;
+    Rcout << "[dlow, dup] : [" << b.dlow << ", " << b.dup << "]" << endl;
+    Rcout << "____Edges____" << endl;
+    Rcout << "__Low__" << endl; 
+    printEdge(b.elow);
+    Rcout << "__Up__" << endl; 
+    printEdge(b.eup);
+    Rcout << endl;
     usleep(100000);
 }
 
 // given a cycle, computes required data from the edge cases
 Boundary Graph::getBoundaryData(vector<Edge*> &vec)
 {
-    Boundary b;
+    Boundary b(vec[0], vec[1]);
     double diff;
 
-    for (int i = 0; i < vec.size() - 1; i += 2)
+    //printBoundary(b);
+
+    for (int i = 2; i < vec.size() - 1; i += 2)
     {
         diff = b.dlow + vec[i]->weight();
         if (fabs(diff) < eps_) b.nlow++;
@@ -196,6 +222,7 @@ Boundary Graph::getBoundaryData(vector<Edge*> &vec)
             b.nlow = 1;
             b.elow = vec[i];
         }
+        //printBoundary(b);
         diff = b.dup - vec[i+1]->weight();
         if (fabs(diff) < eps_) b.nup++;
         else if ( diff > 0)
@@ -203,8 +230,10 @@ Boundary Graph::getBoundaryData(vector<Edge*> &vec)
             b.dup -= diff;
             b.nup = 1;
             b.elow = vec[i+1];
-        }        
+        }
+        //printBoundary(b);        
     }
+    //printBoundary(b);
         return b;
 }
 
@@ -212,6 +241,7 @@ Boundary Graph::getBoundaryData(vector<Edge*> &vec)
 double Graph::sampleDelta(vector<Edge *> &vec)
 {
     Boundary b = getBoundaryData(vec);
+    //printBoundary(b);
 
     if (b.nlow + b.nup < 3)
     {
@@ -245,16 +275,16 @@ double Graph::sampleDelta(vector<Edge *> &vec)
     else return b.dup;
 }
 
-// // applies delta along a cycle
-// void Graph::updateWeights(vector<Edge *> &vec, double delta)
-// {
-//     //Rcout << "Delta: " << delta << endl;
-//   for (int i = 0; i < vec.size() - 1; i += 2)
-//   {
-//       vec[i]->weight(vec[i]->weight() + delta);
-//       vec[i+1]->weight(vec[i+1]->weight() - delta);
-//   }
-// }
+// applies delta along a cycle
+void Graph::updateWeights(vector<Edge *> &vec, double delta)
+{
+    //Rcout << "Delta: " << delta << endl;
+  for (int i = 0; i < vec.size() - 1; i += 2)
+  {
+      vec[i]->weight(vec[i]->weight() + delta);
+      vec[i+1]->weight(vec[i+1]->weight() - delta);
+  }
+}
 
 
 // // computes log unconditional density of delta along a vector
