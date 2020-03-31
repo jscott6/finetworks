@@ -181,78 +181,70 @@ void printEdge(Edge* const edge)
     usleep(100000);
 }
 
-// // given a cycle, computes required data from the edge cases
-// Boundary Graph::getBoundaryData(vector<Edge*> &vec)
-// {
-//     Boundary b;
-//     // start with computing the range of delta
-//     for (int i = 0; i < vec.size() - 1; i += 2)
-//     {
-//         b.dlow = max(b.dlow, -vec[i]->weight());
-//         b.dup = min(b.dup, vec[i+1]->weight());
-//     }
-//     // how many edges deleted at boundaries?
-//     for (int i = 0; i < vec.size() - 1; i += 2)
-//     {
-//         if (vec[i]->weight() + b.dlow < eps_) b.nlow++;
-//         if (vec[i+1]->weight() + b.dup < eps_) b.nup++;
-//     }
-//     // likelihood at the boundaries?
-//     b.llow = loglDelta(vec, b.dlow);
-//     b.lup = loglDelta(vec, b.dup);
-//     return b;
-// }
+// given a cycle, computes required data from the edge cases
+Boundary Graph::getBoundaryData(vector<Edge*> &vec)
+{
+    Boundary b;
+    double diff;
 
-// // given a vector of edge pointers, will sample a delta from its conditional distribution
-// double Graph::sampleDelta(vector<Edge *> &vec)
-// {
-//     Boundary b = getBoundaryData(vec);
+    for (int i = 0; i < vec.size() - 1; i += 2)
+    {
+        diff = b.dlow + vec[i]->weight();
+        if (fabs(diff) < eps_) b.nlow++;
+        else if (diff < 0)
+        {
+            b.dlow -= diff;
+            b.nlow = 1;
+            b.elow = vec[i];
+        }
+        diff = b.dup - vec[i+1]->weight();
+        if (fabs(diff) < eps_) b.nup++;
+        else if ( diff > 0)
+        {
+            b.dup -= diff;
+            b.nup = 1;
+            b.elow = vec[i+1];
+        }        
+    }
+        return b;
+}
 
+// given a vector of edge pointers, will sample a delta from its conditional distribution
+double Graph::sampleDelta(vector<Edge *> &vec)
+{
+    Boundary b = getBoundaryData(vec);
 
-//     // Rcout << "Delta Range: (" << b.dlow << "," << b.dup << ")" << endl;
-//     // Rcout << "N: (" << b.nlow << "," << b.nup << ")" << endl;
-//     // Rcout << "Likelihood: (" << b.llow << "," << b.lup << ")" << endl;
+    if (b.nlow + b.nup < 3)
+    {
+        double lambda_marg = 0.0;
+        double pint, plow, pup;
+        double len = b.dup - b.dlow;
 
+        // compute lambda_marg, correcting for numerical errors
+        for (int i = 0; i < vec.size() - 1; i += 2)
+            lambda_marg += vec[i]->lambda() - vec[i+1]->lambda();
+        if (fabs(lambda_marg) < eps_) lambda_marg = 0.;
 
-//     if (b.nlow + b.nup < 3)
-//     {
-//         // compute lambda_marg
-//         double lambda_marg = 0.0;
-//         for (int i = 0; i < vec.size() - 1; i += 2)
-//             lambda_marg += vec[i]->lambda() - vec[i+1]->lambda();
-//         // correct for numerical errors
-//         if (fabs(lambda_marg) < eps_) lambda_marg = 0.;
+        // compute unnormalised log probability of intermediate and boundary cases
+        if (lambda_marg == 0.) pint = log(len);
+        else pint = log((exp(lambda_marg * len / 2.) - exp(-lambda_marg * len / 2.)) / lambda_marg);
+        plow = log(1 - b.elow->p()) - log(b.elow->p() * b.elow->lambda()) + lambda_marg * len / 2.;
+        pup = log(1 - b.eup->p()) - log(b.eup->p() * b.eup->lambda()) - lambda_marg * len / 2.;
 
-//         //Rcout << "lambda_marg: " << lambda_marg << endl;
-//         // calculate case probabilities
-//         double pall= loglDelta(vec, (b.dlow + b.dup)/2.); 
-//         double len = b.dup - b.dlow;
-//         if (lambda_marg == 0.) pall += log(len);
-//         else pall += log(-1./lambda_marg*(exp(-lambda_marg*(len/2.))-exp(-lambda_marg*(-len/2.))));
+        // normalise log probs for stability, and exponentiate
+        double maxval = max(pint, max(plow, pup));
+        pint = exp(pint - maxval);
+        plow = exp(plow - maxval);
+        pup = exp(pup - maxval);
 
-//         // normalise for better computational stability
-//         double maxval = max(pall, max(b.llow, b.lup));
-//         pall = exp(pall - maxval);
-//         b.llow = exp(b.llow - maxval);
-//         b.lup = exp(b.lup - maxval);
-
-//         uniforrows_.size()real_distribution<double> dist(0.0, 1.0);
-//         double u = dist(generator_)*(pall + b.llow + b.lup);
-
-//         if (pall >= u) return extExp(b, lambda_marg); // sample from extendended exponential
-//         if (pall + b.llow >= u) return b.dlow; // return delta low
-//         else return b.dup; // return delta up
-//     }
-//     else if (b.nlow > b.nup) return b.dlow;
-//     else if (b.nlow < b.nup) return b.dup;
-//     else 
-//     {
-//         uniforrows_.size()real_distribution<double> dist(0.0, 1.0);
-//         double u = dist(generator_)*(b.llow + b.lup);
-//         if(b.llow >= u) return b.dlow;
-//         else return b.dup;
-//     }
-// }
+        double u = R::runif(0.0, pint + plow + pup);
+        if (u <= pint) return randExtExp(b, lambda_marg);
+        if (u <= pint + plow) return b.dlow;
+        else return b.dup;
+    }
+    else if (b.nlow >= b.nup) return b.dlow;
+    else return b.dup;
+}
 
 // // applies delta along a cycle
 // void Graph::updateWeights(vector<Edge *> &vec, double delta)
@@ -281,15 +273,14 @@ void printEdge(Edge* const edge)
 //     return res;
 // }
 
-// // generates a r.v. from an extended exponential distribution
-// // uses the inversion method
-// double Graph::extExp(Boundary b, double lambda_marg)
-// {
-//     uniforrows_.size()real_distribution<double> dist(0.,1.);
-//     double u = dist(generator_);
-//     if (lambda_marg == 0.) return b.dlow + u*(b.dup - b.dlow);
-//     else return -log((1. - u)*exp(-lambda_marg*b.dlow) + u*exp(-lambda_marg*b.dup))/lambda_marg;
-// }
+// generates a r.v. from an extended exponential distribution
+// uses the inversion method
+double Graph::randExtExp(Boundary b, double lambda_marg)
+{
+    if (lambda_marg == 0.) return R::runif(b.dlow, b.dup);
+    double u = R::runif(0., 1.);
+    else return -log((1. - u) * exp(-lambda_marg * b.dlow) + u * exp(-lambda_marg * b.dup)) / lambda_marg;
+}
 
 
 

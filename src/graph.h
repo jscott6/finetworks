@@ -11,15 +11,16 @@
 
 struct Boundary
 {
-    double dlow, dup, llow, lup;
+    double dlow, dup;
     unsigned int nlow, nup;
+    Edge *elow, *eup;
     Boundary()
       : dlow(-DBL_MAX), 
         dup(DBL_MAX),
-        llow(0.),
-        lup(0.),
         nlow(0), 
-        nup(0)
+        nup(0),
+        elow(NULL),
+        eup(NULL)
   {
   }
 };
@@ -45,9 +46,8 @@ private:
     int sampleKernel(std::vector<Edge*>& vec, int L);
     int sampleEdge(Vertex* v, std::vector<Edge*>& vec, int pos);
     //void updateWeights(std::vector<Edge *> &vec, double delta);
-    //double sampleDelta(std::vector<Edge *> &vec);
-    //double loglDelta(std::vector<Edge*> &vec, double delta);
-    //double extExp(Boundary b, double lambda_marg);
+    double sampleDelta(std::vector<Edge *> &vec);
+    double randExtExp(Boundary b, double lambda_marg);
     double eps_;
     Rcpp::NumericVector cycle_length_cumprob_;
     std::vector<Vertex> rows_, cols_;
