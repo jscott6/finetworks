@@ -4,19 +4,18 @@
 
 using namespace std;
 
-double const EPS = 1e-9;
-
-Edge::Edge(Vertex* const row, Vertex* const col, vector<Edge*>* edge_list, double const weight, int const fixed, double const p, double const lambda): 
+Edge::Edge(Vertex* const row, Vertex* const col, vector<Edge*>* edge_list, double const weight, int const fixed, double const p, double const lambda, double const tol): 
     row_(row), 
     col_(col),
     edge_list_(edge_list),
     weight_(weight), 
     p_(p),
     lambda_(lambda),
+    tolerance_(tol),
     fixed_(fixed)
 {
     // add to vertex structure if positive weight and free
-    if(weight > EPS && !fixed)  
+    if(weight > tol && !fixed)  
         add();
 }
 
@@ -51,7 +50,7 @@ void Edge::remove()
 
 void Edge::weight(double w)
 {
-  if (weight_ < EPS && w > EPS) add();
-  if (weight_ > EPS && w < EPS) remove();
+  if (weight_ < tolerance_ && w > tolerance_) add();
+  if (weight_ > tolerance_ && w < tolerance_) remove();
   weight_ = w;
 }

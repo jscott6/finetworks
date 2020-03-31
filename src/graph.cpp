@@ -10,10 +10,8 @@ using namespace arma;
 int const FAIL = 1;
 int const OK = 0;
 
-void printEdge(Edge* const edge);
-
-Graph::Graph(NumericMatrix const &wm, NumericMatrix const &p, NumericMatrix const &lambda, IntegerMatrix const &fixed, double eps):
-    eps_(eps),
+Graph::Graph(NumericMatrix const &wm, NumericMatrix const &p, NumericMatrix const &lambda, IntegerMatrix const &fixed, double tol):
+    tolerance_(tol),
     debug_(false)
 {
     for (int i = 0; i != wm.nrow(); ++i) rows_.push_back(Vertex(i, vrow));
@@ -23,7 +21,7 @@ Graph::Graph(NumericMatrix const &wm, NumericMatrix const &p, NumericMatrix cons
     for (int i = 0; i != rows_.size(); ++i)
         for (int j = 0; j != cols_.size(); ++j)
             edges_[i][j] = new Edge(&rows_[i], &cols_[j], &edge_list_,
-                                  wm(i,j), fixed(i,j), p(i,j), lambda(i,j));
+                                  wm(i,j), fixed(i,j), p(i,j), lambda(i,j), tol);
 
     IntegerVector cycle_lengths = seq(2, min(rows_.size(), cols_.size()));
     NumericVector cycle_length_prob = 1. / as<NumericVector>(cycle_lengths);
@@ -38,8 +36,6 @@ Graph::~Graph()
             delete edges_[i][j];
 }
 
-
-
 // performs multiple sampling steps, returning a weights matrix
 List Graph::sample(int nsamples, int thin, int burnin, bool sparse) 
 {
@@ -47,7 +43,7 @@ List Graph::sample(int nsamples, int thin, int burnin, bool sparse)
     List results(nsamples);
 
     // burnin phase
-    for (int i = 0; i != nsamples * (thin + 1); i++)
+    for (int i = 0; i != burnin * (thin + 1); i++)
         sampleStep();
 
     // sampling phase
@@ -106,11 +102,13 @@ NumericMatrix Graph::weight_matrix() const
     NumericMatrix wm(rows_.size(), cols_.size());
     for (int i = 0; i != rows_.size(); ++i)
         for (int j = 0; j != cols_.size(); ++j)
+        {
             wm(i,j) = edges_[i][j]->weight();
+            if (wm(i,j) < tolerance_) wm(i,j) = 0.;
+        }
 
     return wm;
 }
-
 
 // reconstructs a sparse matrix representation from internal datastructure
 sp_mat Graph::sparse_weight_matrix() const
@@ -128,6 +126,7 @@ sp_mat Graph::sparse_weight_matrix() const
             locations(1,k) = e->ends(vcol)->index;
             // store corresponding values
             values(k) = e->weight();
+            if (values(k) < tolerance_) values(k) = 0.;
             k++;
         }
     return sp_mat(locations, values, rows_.size(), cols_.size());
@@ -149,13 +148,13 @@ int Graph::sampleEdge(Vertex* v, vector<Edge*>& vec, int pos)
 {
     if (pos == 0) return FAIL;
     int idx = sampleInt(pos - 1);
+    if (v->edges[idx] == vec.back()) idx = pos;
     Edge* edge = v->edges[idx];
-    if (edge == vec.back()) edge = v->edges[pos];
 
     VertexType a = static_cast<VertexType>(1 - v->vtype);
     if (edge->ends(a)->visited) {
-        edge->setPos(idx, a);
-        v->edges[pos]->setPos(pos, a);
+        edge->setPos(pos, v->vtype);
+        v->edges[pos]->setPos(idx, v->vtype);
         v->edges[idx] = v->edges[pos];
         v->edges[pos] = edge;
         return sampleEdge(v, vec, pos - 1);
@@ -207,7 +206,7 @@ Boundary Graph::getBoundaryData(vector<Edge*> &vec)
     for (int i = 2; i < vec.size() - 1; i += 2)
     {
         diff = b.dlow + vec[i]->weight();
-        if (fabs(diff) < eps_) b.nlow++;
+        if (fabs(diff) < tolerance_) b.nlow++;
         else if (diff < 0)
         {
             b.dlow -= diff;
@@ -215,12 +214,12 @@ Boundary Graph::getBoundaryData(vector<Edge*> &vec)
             b.elow = vec[i];
         }
         diff = b.dup - vec[i+1]->weight();
-        if (fabs(diff) < eps_) b.nup++;
+        if (fabs(diff) < tolerance_) b.nup++;
         else if ( diff > 0)
         {
             b.dup -= diff;
             b.nup = 1;
-            b.elow = vec[i+1];
+            b.eup = vec[i+1];
         }    
     }
     return b;
@@ -241,7 +240,7 @@ double Graph::sampleDelta(vector<Edge *> &vec)
         // compute lambda_marg, correcting for numerical errors
         for (int i = 0; i < vec.size() - 1; i += 2)
             lambda_marg += vec[i]->lambda() - vec[i+1]->lambda();
-        if (fabs(lambda_marg) < eps_) lambda_marg = 0.;
+        if (fabs(lambda_marg) < tolerance_) lambda_marg = 0.;
 
         // compute unnormalised log probability of intermediate and boundary cases
         if (lambda_marg == 0.) pint = log(len);
@@ -274,22 +273,6 @@ void Graph::updateWeights(vector<Edge *> &vec, double delta)
       vec[i+1]->weight(vec[i+1]->weight() - delta);
   }
 }
-
-
-// // computes log unconditional density of delta along a vector
-// double Graph::loglDelta(vector<Edge*> &vec, double delta)
-// {
-//     double res = 0.;
-//     for (int i = 0; i != vec.size(); ++i)
-//     {
-//         double val = vec[i]->weight();
-//         if (i % 2) val -= delta;
-//         else val += delta;
-//         if (val < eps_) res += log(1. - vec[i]->p());
-//         else res += log(vec[i]->p()) + log(vec[i]->lambda()) - vec[i]->lambda()*val;
-//     }
-//     return res;
-// }
 
 // generates a r.v. from an extended exponential distribution
 // uses the inversion method

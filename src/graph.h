@@ -16,12 +16,12 @@ public:
           Rcpp::NumericMatrix const &p, 
           Rcpp::NumericMatrix const &lambda, 
           Rcpp::IntegerMatrix const &fixed,
-          double eps = 1e-9);
+          double tol = 1e-12);
     ~Graph();
     Rcpp::List sample(int nsamples = 10000, int thin = 10, int burnin = 5000, bool sparse = FALSE);
     //void summary() const;
     void sampleStep();
-    void debug(bool b) { debug_ = true; }
+    void debug(bool b) { debug_ = b; }
     void printRows();
     void printCols();
     Rcpp::NumericMatrix weight_matrix() const;
@@ -35,7 +35,7 @@ private:
     void updateWeights(std::vector<Edge *> &vec, double delta);
     double sampleDelta(std::vector<Edge *> &vec);
     double randExtExp(Boundary b, double lambda_marg);
-    double eps_;
+    double tolerance_;
     bool debug_;
     Rcpp::NumericVector cycle_length_cumprob_;
     std::vector<Vertex> rows_, cols_;

@@ -13,8 +13,6 @@ Rcpp::List constructNetwork(Rcpp::NumericVector in_strength,
                             Rcpp::NumericVector out_strength, Rcpp::DataFrame df);
 
 
-
-
 // Uniformly samples an integer from 0 up to and including n
 int sampleInt(int n);
 

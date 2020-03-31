@@ -21,7 +21,7 @@ struct Vertex
 class Edge 
 {
 public:
-    Edge(Vertex* const row, Vertex* const col, std::vector<Edge*>* edge_list, double const weight, int const fixed, double const p, double const lambda);
+    Edge(Vertex* const row, Vertex* const col, std::vector<Edge*>* edge_list, double const weight, int const fixed, double const p, double const lambda, double const tol = 1e-12);
     int fixed() const { return fixed_; }
     double weight() const {return weight_; }
     double p() const {return p_; }
@@ -35,7 +35,7 @@ private:
     void remove();
     Vertex * const row_, * const col_;
     std::vector<Edge*>* const edge_list_;
-    double weight_, p_, lambda_;
+    double weight_, p_, lambda_, tolerance_;
     int col_pos_, row_pos_, edge_list_pos_;
     int const fixed_;
 };
