@@ -140,24 +140,17 @@ IntegerMatrix Graph::fixed() const
     return fm;
 }
 
-// Sample an edge to an unvisited vertex.
-// pos is the index of the final edge that can be sampled.  
-int Graph::sampleEdge(Vertex* v, vector<Edge*>& vec, int pos)
-{
-    if (pos == 0) return FAIL;
-    int idx = sampleInt(pos - 1);
-    if (v->edges[idx] == vec.back()) idx = pos;
-    Edge* edge = v->edges[idx];
 
+// Attempt to sample a edge to an unvisited vertex.
+int Graph::sampleEdge(Vertex* v, vector<Edge*>& vec)
+{
     VertexType a = static_cast<VertexType>(1 - v->vtype);
-    if (edge->ends(a)->visited) {
-        edge->setPos(pos, v->vtype);
-        v->edges[pos]->setPos(idx, v->vtype);
-        v->edges[idx] = v->edges[pos];
-        v->edges[pos] = edge;
-        return sampleEdge(v, vec, pos - 1);
-    }
-    vec.push_back(edge);
+    int fidx = v->edges.size() - 1;
+    if (fidx < 1) return FAIL;
+    Edge* e = v->edges[sampleInt(fidx - 1)];
+    if (e == vec.back()) e = v->edges.back();
+    if (e->ends(a)->visited) return FAIL;
+    vec.push_back(e);
     return OK;
 }
 
@@ -170,10 +163,10 @@ int Graph::sampleKernel(vector<Edge*>& vec, int L)
 
     for (int k = 1; k != L; k++)
     {
-        if (sampleEdge(u, vec, u->edges.size() - 1)) return FAIL;
+        if (sampleEdge(u, vec)) return FAIL;
         u = vec.back()->ends(vcol);
         u->visited = true;
-        if (sampleEdge(u, vec, u->edges.size() - 1)) return FAIL;
+        if (sampleEdge(u, vec)) return FAIL;
         u = vec.back()->ends(vrow);
         u->visited = true;
     }

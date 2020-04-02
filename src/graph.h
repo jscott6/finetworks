@@ -31,7 +31,7 @@ private:
     std::pair<double, double> getBoundaryFactors(std::vector<Edge*> &vec, Boundary &b);
     int sampleCycleLength();
     int sampleKernel(std::vector<Edge*>& vec, int L);
-    int sampleEdge(Vertex* v, std::vector<Edge*>& vec, int pos);
+    int sampleEdge(Vertex* v, std::vector<Edge*>& vec);
     void updateWeights(std::vector<Edge *> &vec, double delta);
     double sampleDelta(std::vector<Edge *> &vec);
     double randExtExp(Boundary b, double lambda_marg);
