@@ -5,7 +5,6 @@ using namespace std;
 using namespace Rcpp;
 using namespace ConstructNetwork;
 
-
 using NV = Rcpp::NumericVector;
 using IV = Rcpp::IntegerVector;
 using NM = Rcpp::NumericMatrix;

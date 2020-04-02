@@ -1,4 +1,3 @@
-
 #include "graph.h"
 #include "auxiliary.h"
 #include <unistd.h>
@@ -7,8 +6,8 @@ using namespace std;
 using namespace Rcpp;
 using namespace arma;
 
-int const FAIL = 1;
-int const OK = 0;
+#define FAIL 1;
+#define OK 0;
 
 Graph::Graph(NumericMatrix const &wm, NumericMatrix const &p, NumericMatrix const &lambda, IntegerMatrix const &fixed, double tol):
     tolerance_(tol),
@@ -39,7 +38,6 @@ Graph::~Graph()
 // performs multiple sampling steps, returning a weights matrix
 List Graph::sample(int nsamples, int thin, int burnin, bool sparse) 
 {
-    
     List results(nsamples);
 
     // burnin phase
@@ -198,7 +196,7 @@ void Graph::printCols()
 }
 
 // given a cycle, computes required data from the edge cases
-Boundary Graph::getBoundaryData(vector<Edge*> &vec)
+Boundary Graph::getBoundary(vector<Edge*> &vec)
 {
     Boundary b(vec[0], vec[1]);
     double diff;
@@ -222,13 +220,33 @@ Boundary Graph::getBoundaryData(vector<Edge*> &vec)
             b.eup = vec[i+1];
         }    
     }
+
     return b;
+}
+
+pair<double, double> Graph::getBoundaryFactors(vector<Edge*> &vec, Boundary &b)
+{
+    bool inter = (b.dup > tolerance_) ? 1 : 0;
+    int x, denom = 0, num_up, num_low, edges = edge_list_.size() + 1 - inter;
+
+    for (const auto &e : vec)
+    {
+        x = (e->ends(vrow)->edges.size() - ((e->ends(vrow) != b.eup->ends(vrow)) || inter)) * 
+            (e->ends(vcol)->edges.size() - ((e->ends(vcol) != b.eup->ends(vcol)) || inter));
+        if (e == b.elow) num_low = x;
+        else if (e == b.eup) num_up = x;
+        denom += x;
+    }
+
+    return pair<double, double>( ((edges / (double) (edges - 1)) * num_low) / denom,
+                                 ((edges / (double) (edges - 1)) * num_up) / denom );
+
 }
 
 // given a vector of edge pointers, will sample a delta from its conditional distribution
 double Graph::sampleDelta(vector<Edge *> &vec)
 {
-    Boundary b = getBoundaryData(vec);
+    Boundary b = getBoundary(vec);
     if(debug_) printBoundary(b);
 
     if (b.nlow + b.nup < 3)
@@ -247,6 +265,8 @@ double Graph::sampleDelta(vector<Edge *> &vec)
         else pint = log((exp(lambda_marg * len / 2.) - exp(-lambda_marg * len / 2.)) / lambda_marg);
         plow = log(1 - b.elow->p()) - log(b.elow->p() * b.elow->lambda()) + lambda_marg * len / 2.;
         pup = log(1 - b.eup->p()) - log(b.eup->p() * b.eup->lambda()) - lambda_marg * len / 2.;
+
+        getBoundaryFactors(vec, b);
 
         // normalise log probs for stability, and exponentiate
         double maxval = max(pint, max(plow, pup));

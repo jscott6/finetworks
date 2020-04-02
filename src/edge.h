@@ -1,22 +1,9 @@
-
 #ifndef GUARD_edge
 #define GUARD_edge
 
 #include <vector>
 #include <RcppCommon.h>
-
-class Edge;
-enum VertexType {vrow, vcol};
-
-struct Vertex 
-{
-    int index;
-    VertexType vtype;
-    bool visited;
-    std::vector<Edge*> edges;
-    Vertex(int idx, VertexType a) : 
-        index(idx), vtype(a), visited(false) {}
-};
+#include "vertex.h"
 
 class Edge 
 {

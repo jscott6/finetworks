@@ -1,4 +1,3 @@
-
 #ifndef GUARD_graph
 #define GUARD_graph
 
@@ -28,7 +27,8 @@ public:
     arma::sp_mat sparse_weight_matrix() const;
     Rcpp::IntegerMatrix fixed() const;
 private:
-    Boundary getBoundaryData(std::vector<Edge*>& vec);
+    Boundary getBoundary(std::vector<Edge*>& vec);
+    std::pair<double, double> getBoundaryFactors(std::vector<Edge*> &vec, Boundary &b);
     int sampleCycleLength();
     int sampleKernel(std::vector<Edge*>& vec, int L);
     int sampleEdge(Vertex* v, std::vector<Edge*>& vec, int pos);

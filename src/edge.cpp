@@ -1,4 +1,3 @@
-
 #include "edge.h"
 #include <algorithm>
 

@@ -1,4 +1,3 @@
-
 #include "graph.h"
 
 RCPP_MODULE(graph_module)

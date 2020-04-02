@@ -1,4 +1,3 @@
-
 #ifndef GUARD_construct_network
 #define GUARD_construct_network
 
