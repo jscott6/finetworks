@@ -10,8 +10,7 @@ using namespace arma;
 #define OK 0;
 
 Graph::Graph(NumericMatrix const &wm, NumericMatrix const &p, NumericMatrix const &lambda, IntegerMatrix const &fixed, double tol):
-    tolerance_(tol),
-    debug_(false)
+    tolerance_(tol)
 {
     for (int i = 0; i != wm.nrow(); ++i) rows_.push_back(Vertex(i, vrow));
     for (int j = 0; j != wm.ncol(); ++j) cols_.push_back(Vertex(j, vcol));
@@ -72,7 +71,6 @@ void Graph::sampleStep()
     vector<Edge*> cycle;
     cycle.reserve(2 * L);
     int discard = sampleKernel(cycle, L);
-    if(debug_) Rcout << "Discarded: " << discard << endl;
 
     for(auto& e : cycle)
     {
@@ -80,15 +78,8 @@ void Graph::sampleStep()
         e->ends(vcol)->visited = false;
     }
 
-    if(debug_)
-    {
-        for (const auto& e: cycle) printEdge(e);
-    }
-
     if (discard) return;
-
     double delta = sampleDelta(cycle);
-    if(debug_) Rcout << "Delta: " << delta << endl;
     updateWeights(cycle, delta);
 
     return;
@@ -176,18 +167,6 @@ int Graph::sampleKernel(vector<Edge*>& vec, int L)
     return OK;
 }
 
-void Graph::printRows()
-{
-    for(const auto &v : rows_)
-        printVertex(v);
-}
-
-void Graph::printCols()
-{
-    for(const auto &v : cols_)
-        printVertex(v);
-}
-
 // given a cycle, computes required data from the edge cases
 Boundary Graph::getBoundary(vector<Edge*> &vec)
 {
@@ -240,7 +219,6 @@ pair<double, double> Graph::getBoundaryFactors(vector<Edge*> &vec, Boundary &b)
 double Graph::sampleDelta(vector<Edge *> &vec)
 {
     Boundary b = getBoundary(vec);
-    if(debug_) printBoundary(b);
 
     if (b.nlow + b.nup < 3)
     {
@@ -254,18 +232,19 @@ double Graph::sampleDelta(vector<Edge *> &vec)
         if (fabs(lambda_marg) < tolerance_) lambda_marg = 0.;
 
         // compute unnormalised log probability of intermediate and boundary cases
+
         if (lambda_marg == 0.) pint = log(len);
         else pint = log((exp(lambda_marg * len / 2.) - exp(-lambda_marg * len / 2.)) / lambda_marg);
         plow = log(1 - b.elow->p()) - log(b.elow->p() * b.elow->lambda()) + lambda_marg * len / 2.;
         pup = log(1 - b.eup->p()) - log(b.eup->p() * b.eup->lambda()) - lambda_marg * len / 2.;
 
-        getBoundaryFactors(vec, b);
+        pair<double,double> factors = getBoundaryFactors(vec, b);
 
         // normalise log probs for stability, and exponentiate
         double maxval = max(pint, max(plow, pup));
         pint = exp(pint - maxval);
-        plow = exp(plow - maxval);
-        pup = exp(pup - maxval);
+        plow = exp(plow - maxval) * factors.first;
+        pup = exp(pup - maxval) * factors.second;
 
         double u = R::runif(0.0, pint + plow + pup);
         if (u <= pint) return randExtExp(b, lambda_marg);
@@ -279,7 +258,6 @@ double Graph::sampleDelta(vector<Edge *> &vec)
 // applies delta along a cycle
 void Graph::updateWeights(vector<Edge *> &vec, double delta)
 {
-    //Rcout << "Delta: " << delta << endl;
   for (int i = 0; i < vec.size() - 1; i += 2)
   {
       vec[i]->weight(vec[i]->weight() + delta);
